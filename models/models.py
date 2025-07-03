@@ -9,7 +9,7 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String)
-    email: Mapped[str] = mapped_column(String)
+    email: Mapped[str] = mapped_column(String, unique=True)
     password: Mapped[str] = mapped_column(String)
     created_at: Mapped[TIMESTAMP] = mapped_column(TIMESTAMP, server_default=func.now())
 
@@ -20,10 +20,10 @@ class Customer(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column()
     name: Mapped[str] = mapped_column(String)
-    email: Mapped[str] = mapped_column(String)
+    email: Mapped[str] = mapped_column(String, unique=True)
     phone: Mapped[int] = mapped_column()
-    address: Mapped[str] = mapped_column(String)
-    tax_id: Mapped[int] = mapped_column(nullable=True)
+    address: Mapped[str] = mapped_column(String, unique=True)
+    tax_id: Mapped[int] = mapped_column(unique=True, nullable=False)
     notes: Mapped[str] = mapped_column(String, nullable=True)
     created_at: Mapped[TIMESTAMP] = mapped_column(TIMESTAMP, server_default=func.now())
 
@@ -70,7 +70,7 @@ class Invoice(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     customer_id: Mapped[int] = mapped_column()
     user_id: Mapped[int] = mapped_column()
-    invoice_number: Mapped[int] = mapped_column()
+    invoice_number: Mapped[int] = mapped_column(unique=True)
     issue_date: Mapped[Date] = mapped_column(Date)
     due_date: Mapped[Date] = mapped_column(Date)
     status: Mapped[str] = mapped_column(String)
