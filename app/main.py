@@ -1,10 +1,25 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+print("Starte main.py")
+from fastapi import FastAPI
 
-from models.models import Base, User
+from app.user_routes import router as user_router
+from app.init_db import init_db
 
-engine = create_engine("postgresql+psycopg2://myuser:mypassword@db:5432/mydatabase")
-Base.metadata.create_all(engine)
-Session = sessionmaker(bind=engine)
-session = Session()
+print("FASTAPI importiert")
 
+app = FastAPI()
+
+print("FASTAPI-Objekt erstellt")
+
+# Optional:
+#init_db()
+
+app.include_router(user_router)
+
+
+@app.get("/")
+def root():
+    return {"message": "Hello from FastAPI + SQLAlchemy!"}
+
+
+# http://localhost:8000/docs
+# uvicorn app.api:app --reload --host 127.0.0.1 --port 8000
