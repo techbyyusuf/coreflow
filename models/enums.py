@@ -12,29 +12,27 @@ class UnitType(enum.Enum):
     HOUR = "h"
 
 
-class DocumentType(enum.Enum):
-    ORDER = "order"
-    INVOICE = "invoice"
-    OFFER = "offer"
-
-
-class DocumentStatus(enum.Enum):
-    PAID = "paid"
+class OrderStatus(enum.Enum):
+    DRAFT = "open"
+    IN_PROGRESS = "in_progress"
+    OPEN = "open"
+    COMPLETED = "completed"
     SHIPPED = "shipped"
+    CANCELLED = "cancelled"
+
+
+class QuotationStatus(enum.Enum):
     DRAFT = "draft"
     SENT = "sent"
     ACCEPTED = "accepted"
     REJECTED = "rejected"
     EXPIRED = "expired"
-    PROCESSING = "processing"
-    COMPLETED = "completed"
-    CANCELLED = "cancelled"
+
+
+class InvoiceStatus(enum.Enum):
+    DRAFT = "draft"
+    OPEN = "open"
+    SENT = "sent"
+    PAID = "paid"
     OVERDUE = "overdue"
-
-
-VALID_STATUSES = {
-    "ORDER": {"DRAFT", "OPEN", "PROCESSING", "COMPLETED", "SHIPPED", "CANCELLED"},
-    "OFFER": {"DRAFT", "SENT", "ACCEPTED", "REJECTED", "EXPIRED"},
-    "INVOICE": {"DRAFT", "OPEN", "SENT", "PAID", "OVERDUE"}
-}
-
+    CANCELLED = "cancelled"

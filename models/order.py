@@ -1,0 +1,21 @@
+from sqlalchemy import String, Date, ForeignKey, Enum
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from models.base import Base
+from models.enums import OrderStatus
+
+class Order(Base):
+    __tablename__ = "orders"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    customer_id: Mapped[int] = mapped_column(ForeignKey("customers.id"), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    issue_date: Mapped[Date] = mapped_column(Date, nullable=False)
+    due_date: Mapped[Date] = mapped_column(Date, nullable=True)
+    delivery_date: Mapped[Date] = mapped_column(Date, nullable=True)
+    order_number: Mapped[str] = mapped_column(String, unique=True, nullable=True)
+    status: Mapped[OrderStatus] = mapped_column(Enum(OrderStatus), nullable=False)
+    reference: Mapped[str] = mapped_column(String, nullable=True)
+    notes: Mapped[str] = mapped_column(String, nullable=True)
+
+    items = relationship("OrderItem", backref="order", cascade="all, delete-orphan")
