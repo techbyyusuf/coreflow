@@ -64,12 +64,12 @@ class QuotationService:
             return []
 
     def update_quotation_status(self, quotation_id: int, new_status: str) -> None:
-        if new_status.upper() not in QuotationStatus.__members__:
-            raise ValueError(f"Invalid quotation status: {new_status}")
-
         quotation = self.get_quotation_by_id(quotation_id)
         if not quotation:
             raise ValueError(f"Quotation with id {quotation_id} not found.")
+
+        if new_status.upper() not in QuotationStatus.__members__:
+            raise ValueError(f"Invalid quotation status: {new_status}")
 
         try:
             quotation.status = QuotationStatus[new_status.upper()]

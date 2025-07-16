@@ -24,7 +24,7 @@ def create_quotation_item(payload: QuotationItemCreateSchema, db: Session = Depe
     service = QuotationItemService(db)
     try:
         service.create_item(
-            document_id=payload.quotation_id,
+            quotation_id=payload.quotation_id,
             product_id=payload.product_id,
             quantity=payload.quantity,
             unit_price=payload.unit_price

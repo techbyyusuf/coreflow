@@ -24,7 +24,7 @@ def create_invoice_item(payload: InvoiceItemCreateSchema, db: Session = Depends(
     service = InvoiceItemService(db)
     try:
         service.create_item(
-            document_id=payload.invoice_id,
+            invoice_id=payload.invoice_id,
             product_id=payload.product_id,
             quantity=payload.quantity,
             unit_price=payload.unit_price
