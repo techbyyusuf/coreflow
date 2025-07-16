@@ -8,7 +8,7 @@ class Customer(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String, nullable= True)
-    company_name:[str] = mapped_column(String, unique=True, nullable=True)
+    company_name: Mapped[str] = mapped_column(String, unique=True, nullable=True)
     email: Mapped[str] = mapped_column(String, unique=True, nullable=True)
     phone: Mapped[str] = mapped_column(String, nullable=True)
     address: Mapped[str] = mapped_column(String, nullable=True)

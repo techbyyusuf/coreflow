@@ -24,7 +24,7 @@ services:
       APP_ENV: feature
     ports:
       - "8001:8000"
-    restart: unless-stopped
+
 
 volumes:
   pgdata:
