@@ -3,11 +3,11 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
 from models.document import Document
-from models.enums import DocumentType, DocumentStatus
-
+from models.enums import DocumentType, DocumentStatus, VALID_STATUSES
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 class DocumentService:
     def __init__(self, session):
@@ -29,11 +29,17 @@ class DocumentService:
         if document_type.upper() not in DocumentType.__members__:
             raise ValueError(f"Invalid document type: {document_type}")
 
+        doc_type_enum = DocumentType[document_type.upper()]
+
         if status.upper() not in DocumentStatus.__members__:
             raise ValueError(f"Invalid document status: {status}")
 
+        allowed_statuses = VALID_STATUSES[doc_type_enum.name]
+        if status.upper() not in allowed_statuses:
+            raise ValueError(f"Status '{status}' is not allowed for document type '{doc_type_enum.value}'.")
+
         new_document = Document(
-            document_type=DocumentType[document_type.upper()],
+            document_type=doc_type_enum,
             customer_id=customer_id,
             user_id=user_id,
             issue_date=issue_date,
@@ -62,7 +68,7 @@ class DocumentService:
             return []
 
     def get_document_by_id(self, document_id: int) -> Document | None:
-        return self.session.scalars(select(Document).filter_by(id=document_id)).first()
+        return self.session.scalars(select(Document).where(Document.id == document_id)).first()
 
     def update_document_status(self, document_id: int, new_status: str) -> None:
         if new_status.upper() not in DocumentStatus.__members__:
@@ -71,6 +77,10 @@ class DocumentService:
         document = self.get_document_by_id(document_id)
         if not document:
             raise ValueError(f"Document with id {document_id} not found.")
+
+        allowed_statuses = VALID_STATUSES[document.document_type.name]
+        if new_status.upper() not in allowed_statuses:
+            raise ValueError(f"Status '{new_status}' is not allowed for document type '{document.document_type.value}'.")
 
         try:
             document.status = DocumentStatus[new_status.upper()]

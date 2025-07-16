@@ -17,7 +17,7 @@ class DocumentItemService:
         """
         Retrieves a single document by ID.
         """
-        return self.session.scalars(select(Document).filter_by(id=document_id)).first()
+        return self.session.scalars(select(Document).where(id=document_id)).first()
 
     def get_open_document_or_raise(self, document_id: int) -> Document:
         """
@@ -61,7 +61,7 @@ class DocumentItemService:
             return []
 
     def get_item_by_id(self, item_id: int) -> DocumentItem | None:
-        return self.session.scalars(select(DocumentItem).filter_by(id=item_id)).first()
+        return self.session.scalars(select(DocumentItem).where(id=item_id)).first()
 
     def update_document_item(self, item_id: int, new_quantity: float, new_unit_price: float) -> None:
         """
