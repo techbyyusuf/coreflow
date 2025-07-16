@@ -74,8 +74,8 @@ class UserService:
             raise ValueError(
                 "Password too weak (min. 8 chars, at least 1 digit, at least 1 special character)")
 
-        existing_user = self.session.scalars(select(User)).filter_by(
-            email=email).first()
+        existing_user = self.session.scalars(select(User).filter_by(
+            email=email)).first()
         if existing_user:
             raise ValueError("Email address already in use.")
 

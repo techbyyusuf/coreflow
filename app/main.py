@@ -25,5 +25,5 @@ def root():
 
 
 # docker-compose up --build      -- build für neuen Code
-# http://localhost:8000/docs
+# http://localhost:8001/docs
 # uvicorn app.api:app --reload --host 127.0.0.1 --port 8000

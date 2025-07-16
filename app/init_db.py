@@ -1,9 +1,10 @@
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from models.base import Base
 
-DATABASE_URL = "postgresql+psycopg2://myuser:mypassword@db:5432/mydatabase"
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+psycopg2://myuser:mypassword@db:5432/mydatabase")
 
 engine = create_engine(DATABASE_URL)
 Session = sessionmaker(bind=engine)
