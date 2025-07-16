@@ -4,6 +4,8 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from models.quotation import Quotation
 from models.enums import QuotationStatus
+from models.customer import Customer
+from models.user import User
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -12,13 +14,32 @@ class QuotationService:
     def __init__(self, session):
         self.session = session
 
-    def get_quotation_by_id(self, quotation_id: int) -> Quotation | None:
+    def get_quotation_by_id_or_raise(self, quotation_id: int) -> Quotation | None:
         stmt = select(Quotation).where(Quotation.id == quotation_id)
         quotation =  self.session.scalars(stmt).first()
 
         if not quotation:
             raise ValueError(f"Quotation with id {quotation_id} not found.")
         return quotation
+
+
+    def get_customer_or_raise(self, customer_id: int) -> Customer:
+        stmt = select(Customer).where(Customer.id == customer_id)
+        customer = self.session.scalars(stmt).first()
+
+        if not customer:
+            raise ValueError(f"Customer with id {customer_id} not found.")
+        return customer
+
+
+    def get_user_or_raise(self, user_id: int) -> User:
+        stmt = select(User).where(User.id == user_id)
+        user = self.session.scalars(stmt).first()
+
+        if not user:
+            raise ValueError(f"User with id {user_id} not found.")
+        return user
+    
 
     def create_quotation(
         self,
@@ -30,6 +51,9 @@ class QuotationService:
         status: str = "DRAFT",
         notes: str = None
     ) -> None:
+        self.get_customer_or_raise(customer_id)
+        self.get_user_or_raise(user_id)
+        
         if quotation_number is not None:
             existing_quotation = self.session.scalars(
                 select(Quotation).where(Quotation.quotation_number == quotation_number)
@@ -67,7 +91,7 @@ class QuotationService:
             return []
 
     def update_quotation_status(self, quotation_id: int, new_status: str) -> None:
-        quotation = self.get_quotation_by_id(quotation_id)
+        quotation = self.get_quotation_by_id_or_raise(quotation_id)
 
         if new_status.upper() not in QuotationStatus.__members__:
             raise ValueError(f"Invalid quotation status: {new_status}")
@@ -82,7 +106,7 @@ class QuotationService:
             raise
 
     def update_quotation_notes(self, quotation_id: int, new_notes: str) -> None:
-        quotation = self.get_quotation_by_id(quotation_id)
+        quotation = self.get_quotation_by_id_or_raise(quotation_id)
 
         try:
             quotation.notes = new_notes
@@ -94,7 +118,7 @@ class QuotationService:
             raise
 
     def delete_quotation(self, quotation_id: int) -> None:
-        quotation = self.get_quotation_by_id(quotation_id)
+        quotation = self.get_quotation_by_id_or_raise(quotation_id)
 
         try:
             self.session.delete(quotation)

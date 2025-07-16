@@ -1,11 +1,11 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, confloat
 
 class InvoiceItemCreateSchema(BaseModel):
     invoice_id: int
     product_id: int
-    quantity: float
-    unit_price: float
+    quantity: confloat(ge=0)
+    unit_price: confloat(ge=0)
 
 class InvoiceItemUpdateSchema(BaseModel):
-    new_quantity: float
-    new_unit_price: float
+    new_quantity: confloat(ge=0)
+    new_unit_price: confloat(ge=0)

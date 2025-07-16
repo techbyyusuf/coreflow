@@ -4,6 +4,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from models.order_item import OrderItem
 from models.order import Order
+from models.product import Product
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -14,15 +15,23 @@ class OrderItemService:
         self.session = session
 
 
-    def get_order_by_id(self, order_id: int):
+    def get_order_by_id_or_raise(self, order_id: int):
         stmt = select(Order).where(Order.id == order_id)
         order = self.session.scalars(stmt).first()
         if not order:
             raise ValueError(f"Order with id '{order_id}' not found.")
         return order
+    
+    
+    def get_product_by_id_or_raise(self, product_id: int):
+        stmt = select(Product).where(Product.id == product_id)
+        product = self.session.scalars(stmt).first()
+        if not product:
+            raise ValueError(f"Product with id '{product_id}' not found.")
+        return product
 
 
-    def get_item_by_id(self, item_id: int):
+    def get_item_by_id_or_raise(self, item_id: int):
         stmt = select(OrderItem).where(OrderItem.id == item_id)
         item = self.session.scalars(stmt).first()
         if not item:
@@ -31,9 +40,13 @@ class OrderItemService:
 
 
     def create_item(self, order_id: int, product_id: int, quantity: float, unit_price: float) -> None:
-        order = self.get_order_by_id(order_id)
-        if not order:
-            raise ValueError(f"Order with id {order_id} not found.")
+        self.get_order_by_id_or_raise(order_id)
+        self.get_product_by_id_or_raise(product_id)
+
+        if quantity < 0:
+            raise ValueError("Quantity must be zero or positive.")
+        if unit_price < 0:
+            raise ValueError("Unit price must be zero or positive.")
 
         new_item = OrderItem(
             order_id=order_id,
@@ -53,7 +66,12 @@ class OrderItemService:
 
 
     def update_item(self, item_id: int, new_quantity: float, new_unit_price: float) -> None:
-        item = self.get_item_by_id(item_id)
+        item = self.get_item_by_id_or_raise(item_id)
+
+        if new_quantity < 0:
+            raise ValueError("Quantity must be zero or positive.")
+        if new_unit_price < 0:
+            raise ValueError("Unit price must be zero or positive.")
 
         try:
             item.quantity = new_quantity
@@ -67,7 +85,7 @@ class OrderItemService:
 
 
     def delete_item(self, item_id: int) -> None:
-        item = self.get_item_by_id(item_id)
+        item = self.get_item_by_id_or_raise(item_id)
 
         try:
             self.session.delete(item)

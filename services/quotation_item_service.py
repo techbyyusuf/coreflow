@@ -4,6 +4,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from models.quotation_item import QuotationItem
 from models.quotation import Quotation
+from models.product import Product
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -14,7 +15,7 @@ class QuotationItemService:
         self.session = session
 
 
-    def validate_quotation_exists(self, quotation_id: int):
+    def get_quotation_or_raise(self, quotation_id: int):
         stmt = select(Quotation).where(Quotation.id == quotation_id)
         quotation =  self.session.scalars(stmt).first()
 
@@ -23,7 +24,16 @@ class QuotationItemService:
         return quotation
 
 
-    def get_item_by_id(self, item_id: int):
+    def get_product_or_raise(self, product_id: int):
+        stmt = select(Product).where(Product.id == product_id)
+        product =  self.session.scalars(stmt).first()
+
+        if not product:
+            raise ValueError(f"Product with id '{product_id}' not found.")
+        return product
+
+
+    def get_item_by_id_or_raise(self, item_id: int):
         stmt = select(QuotationItem).where(QuotationItem.id == item_id)
         item =  self.session.scalars(stmt).first()
 
@@ -33,7 +43,13 @@ class QuotationItemService:
 
 
     def create_item(self, quotation_id: int, product_id: int, quantity: float, unit_price: float) -> None:
-        self.validate_quotation_exists(quotation_id)
+        self.get_quotation_or_raise(quotation_id)
+        self.get_product_or_raise(product_id)
+
+        if quantity < 0:
+            raise ValueError("Quantity must be zero or positive.")
+        if unit_price < 0:
+            raise ValueError("Unit price must be zero or positive.")
 
         new_item = QuotationItem(
             quotation_id=quotation_id,
@@ -53,7 +69,12 @@ class QuotationItemService:
 
 
     def update_item(self, item_id: int, new_quantity: float, new_unit_price: float) -> None:
-        item = self.get_item_by_id(item_id)
+        item = self.get_item_by_id_or_raise(item_id)
+
+        if new_quantity < 0:
+            raise ValueError("Quantity must be zero or positive.")
+        if new_unit_price < 0:
+            raise ValueError("Unit price must be zero or positive.")
 
         try:
             item.quantity = new_quantity
@@ -67,7 +88,7 @@ class QuotationItemService:
 
 
     def delete_item(self, item_id: int) -> None:
-        item = self.get_item_by_id(item_id)
+        item = self.get_item_by_id_or_raise(item_id)
 
         try:
             self.session.delete(item)

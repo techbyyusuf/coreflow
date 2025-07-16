@@ -5,6 +5,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from models.invoice_item import InvoiceItem
 from models.invoice import Invoice
 
+from models.product import Product
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -13,25 +15,41 @@ class InvoiceItemService:
     def __init__(self, session):
         self.session = session
 
-    def validate_invoice_exists(self, invoice_id: int):
+    def get_invoice_or_raise(self, invoice_id: int):
         stmt = select(Invoice).where(Invoice.id == invoice_id)
         invoice =  self.session.scalars(stmt).first()
 
         if not invoice:
-            raise ValueError(f"Invoice with id {invoice_id} not found.")
+            raise ValueError(f"Invoice with id '{invoice_id}' not found.")
         return invoice
 
-    def get_item_by_id(self, item_id: int):
+
+    def get_product_or_raise(self, product_id: int):
+        stmt = select(Product).where(Product.id == product_id)
+        product =  self.session.scalars(stmt).first()
+
+        if not product:
+            raise ValueError(f"Product with id '{product_id}' not found.")
+        return product
+
+
+    def get_item_by_id_or_raise(self, item_id: int):
         stmt = select(InvoiceItem).where(InvoiceItem.id == item_id)
         item = self.session.scalars(stmt).first()
 
         if not item:
-            raise ValueError(f"Item with id {item_id} not found.")
+            raise ValueError(f"Item with id '{item_id}' not found.")
         return item
 
 
     def create_item(self, invoice_id: int, product_id: int, quantity: float, unit_price: float) -> None:
-        self.validate_invoice_exists(invoice_id)
+        self.get_invoice_or_raise(invoice_id)
+        self.get_product_or_raise(product_id)
+
+        if quantity < 0:
+            raise ValueError("Quantity must be zero or positive.")
+        if unit_price < 0:
+            raise ValueError("Unit price must be zero or positive.")
 
         new_item = InvoiceItem(
             invoice_id=invoice_id,
@@ -51,7 +69,12 @@ class InvoiceItemService:
 
 
     def update_item(self, item_id: int, new_quantity: float, new_unit_price: float) -> None:
-        item = self.get_item_by_id(item_id)
+        item = self.get_item_by_id_or_raise(item_id)
+
+        if new_quantity < 0:
+            raise ValueError("Quantity must be zero or positive.")
+        if new_unit_price < 0:
+            raise ValueError("Unit price must be zero or positive.")
 
         try:
             item.quantity = new_quantity
@@ -65,7 +88,7 @@ class InvoiceItemService:
 
 
     def delete_item(self, item_id: int) -> None:
-        item = self.get_item_by_id(item_id)
+        item = self.get_item_by_id_or_raise(item_id)
 
         try:
             self.session.delete(item)

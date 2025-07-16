@@ -5,6 +5,9 @@ from sqlalchemy.exc import SQLAlchemyError
 from models.invoice import Invoice
 from models.enums import InvoiceStatus
 
+from models.customer import Customer
+from models.user import User
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -14,13 +17,31 @@ class InvoiceService:
         self.session = session
 
 
-    def get_invoice_by_id(self, invoice_id: int) -> Invoice | None:
+    def get_item_by_id_or_raise(self, invoice_id: int) -> Invoice:
         stmt = select(Invoice).where(Invoice.id == invoice_id)
         invoice = self.session.scalars(stmt).first()
 
         if not invoice:
             raise ValueError(f"Invoice with id {invoice_id} not found.")
         return invoice
+
+
+    def get_customer_or_raise(self, customer_id: int) -> Customer:
+        stmt = select(Customer).where(Customer.id == customer_id)
+        customer = self.session.scalars(stmt).first()
+
+        if not customer:
+            raise ValueError(f"Customer with id {customer_id} not found.")
+        return customer
+
+
+    def get_user_or_raise(self, user_id: int) -> User:
+        stmt = select(User).where(User.id == user_id)
+        user = self.session.scalars(stmt).first()
+
+        if not user:
+            raise ValueError(f"User with id {user_id} not found.")
+        return user
 
 
     def create_invoice(
@@ -33,6 +54,9 @@ class InvoiceService:
         status: str = "DRAFT",
         notes: str = None
     ) -> None:
+        self.get_customer_or_raise(customer_id)
+        self.get_user_or_raise(user_id)
+
         if status.upper() not in InvoiceStatus.__members__:
             raise ValueError(f"Invalid invoice status: {status}")
 
@@ -72,7 +96,7 @@ class InvoiceService:
 
 
     def update_invoice_status(self, invoice_id: int, new_status: str) -> None:
-        invoice = self.get_invoice_by_id(invoice_id)
+        invoice = self.get_item_by_id_or_raise(invoice_id)
 
         if new_status.upper() not in InvoiceStatus.__members__:
             raise ValueError(f"Invalid invoice status: {new_status}")
@@ -88,7 +112,7 @@ class InvoiceService:
 
 
     def update_invoice_notes(self, invoice_id: int, new_notes: str) -> None:
-        invoice = self.get_invoice_by_id(invoice_id)
+        invoice = self.get_item_by_id_or_raise(invoice_id)
 
         try:
             invoice.notes = new_notes
@@ -101,7 +125,7 @@ class InvoiceService:
 
 
     def delete_invoice(self, invoice_id: int) -> None:
-        invoice = self.get_invoice_by_id(invoice_id)
+        invoice = self.get_item_by_id_or_raise(invoice_id)
 
         try:
             self.session.delete(invoice)

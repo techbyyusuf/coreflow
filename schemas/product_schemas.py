@@ -1,10 +1,11 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, confloat
+from typing import Optional
 
 class ProductCreate(BaseModel):
     name: str
-    unit_price: float
+    unit_price: confloat(ge=0)
     unit: str
-    description: str | None = None
+    description: Optional[str] = None
 
 class ProductUpdateName(BaseModel):
     new_name: str

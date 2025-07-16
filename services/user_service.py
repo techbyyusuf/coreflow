@@ -32,17 +32,22 @@ class UserService:
             return False
         return True
 
+    def raise_if_user_email_exists(self, user_email) -> None:
+        stmt = select(User).where(User.email == user_email)
+        user = self.session.scalars(stmt).first()
+
+        if user:
+            raise ValueError("Email address already in use.")
+        return None
+
+
     def create_user(self, name: str, email: str, password: str, role: str = "employee") -> None:
         if not self.is_valid_email(email):
             raise ValueError("Invalid email address format")
         if not self.is_valid_password(password):
             raise ValueError("Password too weak (min. 8 chars, at least 1 digit, at least 1 special character)")
 
-        existing_user = self.session.scalars(
-            select(User).where(User.email == email)
-        ).first()
-        if existing_user:
-            raise ValueError("Email address already in use.")
+        self.raise_if_user_email_exists(email)
 
         role_upper = role.upper()
         if role_upper not in UserRole.__members__:
@@ -59,6 +64,7 @@ class UserService:
             logger.error(f"Error creating user '{name}': {e}")
             raise
 
+
     def get_all_users(self) -> list[User]:
         try:
             return self.session.scalars(select(User)).all()
@@ -66,11 +72,13 @@ class UserService:
             logger.error(f"Error retrieving users: {e}")
             return []
 
+
     def get_user_by_id(self, user_id: int) -> User | None:
         logger.info(f"Searching for user with id '{user_id}'.")
         return self.session.scalars(
             select(User).where(User.id == user_id)
         ).first()
+
 
     def update_user_email(self, user_id: int, new_email: str) -> None:
         if not self.is_valid_email(new_email):
@@ -95,6 +103,7 @@ class UserService:
             logger.error(f"Error updating user email: {e}")
             raise
 
+
     def update_user_password(self, user_id: int, new_password: str) -> None:
         if not self.is_valid_password(new_password):
             raise ValueError("Password too weak (min. 8 chars, at least 1 digit, at least 1 special character)")
@@ -111,6 +120,7 @@ class UserService:
             self.session.rollback()
             logger.error(f"Error updating user password: {e}")
             raise
+
 
     def delete_user(self, user_id: int) -> None:
         user = self.get_user_by_id(user_id)

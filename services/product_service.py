@@ -14,6 +14,9 @@ class ProductService:
 
 
     def create_product(self, name: str, unit_price: float, unit: str, description: str = None) -> None:
+        if unit_price < 0:
+            raise ValueError("Unit price must be zero or positive.")
+
         new_product = Product(
             name=name,
             unit_price=unit_price,
@@ -38,7 +41,7 @@ class ProductService:
             return []
 
 
-    def get_product_by_id(self, product_id: int) -> Product | None:
+    def get_product_by_id_or_raise(self, product_id: int) -> Product | None:
         product = self.session.scalars(
             select(Product).where(Product.id == product_id)
         ).first()
@@ -47,13 +50,14 @@ class ProductService:
         return product
 
 
-    def update_product_price(self, product_id: int, new_price: float) -> None:
-        product = self.get_product_by_id(product_id)
-        if not product:
-            raise ValueError(f"Product with id {product_id} not found.")
+    def update_product_price(self, product_id: int, new_unit_price: float) -> None:
+        product = self.get_product_by_id_or_raise(product_id)
+
+        if new_unit_price < 0:
+            raise ValueError("Unit price must be zero or positive.")
 
         try:
-            product.unit_price = new_price
+            product.unit_price = new_unit_price
             self.session.commit()
             logger.info(f"Product price updated successfully for id {product_id}.")
         except SQLAlchemyError as e:
@@ -63,11 +67,11 @@ class ProductService:
 
 
     def update_product_name(self, product_id: int, new_name: str) -> None:
-        product = self.get_product_by_id(product_id)
+        product = self.get_product_by_id_or_raise(product_id)
 
-        existing_product = self.session.scalars(
-            select(Product).where(Product.name == new_name)
-        ).first()
+        stmt = select(Product).where(Product.name == new_name)
+        existing_product = self.session.scalars(stmt).first()
+
         if existing_product and existing_product.id != product_id:
             raise ValueError("Product name already in use by another product.")
 
@@ -82,7 +86,7 @@ class ProductService:
 
 
     def update_product_description(self, product_id: int, new_description: str) -> None:
-        product = self.get_product_by_id(product_id)
+        product = self.get_product_by_id_or_raise(product_id)
 
         try:
             product.description = new_description
@@ -95,7 +99,7 @@ class ProductService:
 
 
     def update_product_unit(self, product_id: int, new_unit: str) -> None:
-        product = self.get_product_by_id(product_id)
+        product = self.get_product_by_id_or_raise(product_id)
 
         if new_unit.upper() not in UnitType.__members__:
             raise ValueError(f"Invalid unit: {new_unit}")
@@ -111,7 +115,7 @@ class ProductService:
 
 
     def delete_product(self, product_id: int) -> None:
-        product = self.get_product_by_id(product_id)
+        product = self.get_product_by_id_or_raise(product_id)
 
         try:
             self.session.delete(product)

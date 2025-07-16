@@ -18,10 +18,10 @@ class CustomerService:
         pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
         return re.match(pattern, email) is not None
 
-    def get_customer_by_id(self, customer_id: int) -> Customer | None:
-        customer = self.session.scalars(
-            select(Customer).where(Customer.id == customer_id)
-        ).first()
+    def get_customer_by_id_or_raise(self, customer_id: int) -> Customer | None:
+        stmt = select(Customer).where(Customer.id == customer_id)
+        customer = self.session.scalars(stmt).first()
+
         if not customer:
             raise ValueError(f"Customer with id '{customer_id}' not found!")
         return
@@ -97,7 +97,7 @@ class CustomerService:
         if existing_customer and existing_customer.id != customer_id:
             raise ValueError("Company name already in use by another customer.")
 
-        customer = self.get_customer_by_id(customer_id)
+        customer = self.get_customer_by_id_or_raise(customer_id)
 
         try:
             customer.company_name = new_company_name
@@ -109,16 +109,15 @@ class CustomerService:
             raise
 
     def update_customer_email(self, customer_id: int, new_email: str) -> None:
-        if not self.is_valid_email(new_email):
-            raise ValueError("Invalid email address format")
-
+        customer = self.get_customer_by_id_or_raise(customer_id)
         existing_customer = self.session.scalars(
             select(Customer).where(Customer.email == new_email)
         ).first()
         if existing_customer and existing_customer.id != customer_id:
             raise ValueError("Email address already in use by another customer.")
 
-        customer = self.get_customer_by_id(customer_id)
+        if not self.is_valid_email(new_email):
+            raise ValueError("Invalid email address format")
 
         try:
             customer.email = new_email
@@ -130,7 +129,7 @@ class CustomerService:
             raise
 
     def update_customer_phone(self, customer_id: int, new_phone: str) -> None:
-        customer = self.get_customer_by_id(customer_id)
+        customer = self.get_customer_by_id_or_raise(customer_id)
 
         try:
             customer.phone = new_phone
@@ -142,7 +141,7 @@ class CustomerService:
             raise
 
     def update_customer_address(self, customer_id: int, new_address: str) -> None:
-        customer = self.get_customer_by_id(customer_id)
+        customer = self.get_customer_by_id_or_raise(customer_id)
 
         try:
             customer.address = new_address
@@ -154,7 +153,7 @@ class CustomerService:
             raise
 
     def update_customer_notes(self, customer_id: int, new_notes: str) -> None:
-        customer = self.get_customer_by_id(customer_id)
+        customer = self.get_customer_by_id_or_raise(customer_id)
 
         try:
             customer.notes = new_notes
@@ -166,7 +165,7 @@ class CustomerService:
             raise
 
     def delete_customer(self, customer_id: int) -> None:
-        customer = self.get_customer_by_id(customer_id)
+        customer = self.get_customer_by_id_or_raise(customer_id)
 
         try:
             self.session.delete(customer)

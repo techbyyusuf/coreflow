@@ -4,6 +4,8 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from models.order import Order
 from models.enums import OrderStatus
+from models.customer import Customer
+from models.user import User
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -13,12 +15,30 @@ class OrderService:
         self.session = session
 
 
-    def get_order_by_id(self, order_id: int) -> Order | None:
+    def get_order_by_id_or_raise(self, order_id: int) -> Order | None:
         stmt = select(Order).where(Order.id == order_id)
         order = self.session.scalars(stmt).first()
         if not order:
             raise ValueError(f"Order with id '{order_id}' not found.")
         return order
+
+
+    def get_customer_or_raise(self, customer_id: int) -> Customer:
+        stmt = select(Customer).where(Customer.id == customer_id)
+        customer = self.session.scalars(stmt).first()
+
+        if not customer:
+            raise ValueError(f"Customer with id {customer_id} not found.")
+        return customer
+
+
+    def get_user_or_raise(self, user_id: int) -> User:
+        stmt = select(User).where(User.id == user_id)
+        user = self.session.scalars(stmt).first()
+
+        if not user:
+            raise ValueError(f"User with id {user_id} not found.")
+        return user
 
 
     def create_order(
@@ -33,10 +53,12 @@ class OrderService:
         reference: str = None,
         notes: str = None
     ) -> None:
+        self.get_user_or_raise(user_id)
+        self.get_customer_or_raise(customer_id)
+
         if order_number is not None:
-            existing_order = self.session.scalars(
-                select(Order).where(Order.order_number == order_number)
-            ).first()
+            stmt = select(Order).where(Order.order_number == order_number)
+            existing_order = self.session.scalars(stmt).first()
             if existing_order:
                 raise ValueError("Order number already in use.")
 
@@ -74,7 +96,7 @@ class OrderService:
 
 
     def update_order_status(self, order_id: int, new_status: str) -> None:
-        order = self.get_order_by_id(order_id)
+        order = self.get_order_by_id_or_raise(order_id)
 
         if new_status.upper() not in OrderStatus.__members__:
             raise ValueError(f"Invalid order status: {new_status}")
@@ -90,7 +112,7 @@ class OrderService:
 
 
     def update_order_reference(self, order_id: int, new_reference: str) -> None:
-        order = self.get_order_by_id(order_id)
+        order = self.get_order_by_id_or_raise(order_id)
 
         try:
             order.reference = new_reference
@@ -103,7 +125,7 @@ class OrderService:
 
 
     def update_order_notes(self, order_id: int, new_notes: str) -> None:
-        order = self.get_order_by_id(order_id)
+        order = self.get_order_by_id_or_raise(order_id)
 
         try:
             order.notes = new_notes
@@ -116,7 +138,7 @@ class OrderService:
 
 
     def delete_order(self, order_id: int) -> None:
-        order = self.get_order_by_id(order_id)
+        order = self.get_order_by_id_or_raise(order_id)
 
         try:
             self.session.delete(order)
