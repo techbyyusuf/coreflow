@@ -1,7 +1,81 @@
-from models.quotation import Quotation
-from models.quotation_item import QuotationItem
-from services.base_item_services import BaseItemService
+import logging
+from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
 
-class QuotationItemService(BaseItemService):
+from models.quotation_item import QuotationItem
+from models.quotation import Quotation
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+class QuotationItemService:
     def __init__(self, session):
-        super().__init__(session, QuotationItem, Quotation)
+        self.session = session
+
+    def get_quotation_by_id(self, quotation_id: int):
+        return self.session.scalars(
+            select(Quotation).where(Quotation.id == quotation_id)
+        ).first()
+
+    def get_item_by_id(self, item_id: int):
+        return self.session.scalars(
+            select(QuotationItem).where(QuotationItem.id == item_id)
+        ).first()
+
+    def create_item(self, quotation_id: int, product_id: int, quantity: float, unit_price: float) -> None:
+        quotation = self.get_quotation_by_id(quotation_id)
+        if not quotation:
+            raise ValueError(f"Quotation with id {quotation_id} not found.")
+
+        new_item = QuotationItem(
+            quotation_id=quotation_id,
+            product_id=product_id,
+            quantity=quantity,
+            unit_price=unit_price
+        )
+
+        try:
+            self.session.add(new_item)
+            self.session.commit()
+            logger.info(f"Item created successfully for quotation id {quotation_id}.")
+        except SQLAlchemyError as e:
+            self.session.rollback()
+            logger.error(f"Error creating quotation item: {e}")
+            raise
+
+    def update_item(self, item_id: int, new_quantity: float, new_unit_price: float) -> None:
+        item = self.get_item_by_id(item_id)
+        if not item:
+            raise ValueError(f"Item with id {item_id} not found.")
+
+        try:
+            item.quantity = new_quantity
+            item.unit_price = new_unit_price
+            self.session.commit()
+            logger.info(f"Quotation item updated successfully for id {item_id}.")
+        except SQLAlchemyError as e:
+            self.session.rollback()
+            logger.error(f"Error updating quotation item: {e}")
+            raise
+
+    def delete_item(self, item_id: int) -> None:
+        item = self.get_item_by_id(item_id)
+        if not item:
+            raise ValueError(f"Item with id '{item_id}' does not exist.")
+
+        try:
+            self.session.delete(item)
+            self.session.commit()
+            logger.info(f"Quotation item with id '{item_id}' deleted successfully.")
+        except SQLAlchemyError as e:
+            self.session.rollback()
+            logger.error(f"Error deleting quotation item with id '{item_id}': {e}")
+            raise
+
+    def get_all_items(self):
+        try:
+            return self.session.scalars(select(QuotationItem)).all()
+        except SQLAlchemyError as e:
+            logger.error(f"Error retrieving quotation items: {e}")
+            return []

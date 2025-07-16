@@ -7,7 +7,7 @@ class OrderCreateSchema(BaseModel):
     user_id: int
     issue_date: date
     due_date: Optional[date] = None
-    invoice_number: Optional[str] = None
+    order_number: Optional[str] = None
     status: str = "draft"
     notes: Optional[str] = None
 

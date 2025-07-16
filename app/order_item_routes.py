@@ -24,7 +24,7 @@ def create_order_item(payload: OrderItemCreateSchema, db: Session = Depends(get_
     service = OrderItemService(db)
     try:
         service.create_item(
-            document_id=payload.document_id,
+            order_id=payload.order_id,
             product_id=payload.product_id,
             quantity=payload.quantity,
             unit_price=payload.unit_price

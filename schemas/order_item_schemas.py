@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 class OrderItemCreateSchema(BaseModel):
-    document_id: int
+    order_id: int
     product_id: int
     quantity: float
     unit_price: float

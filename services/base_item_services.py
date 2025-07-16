@@ -6,15 +6,17 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class BaseItemService:
-    def __init__(self, session, item_model, document_model):
+    def __init__(self, session, item_model, document_model, document_id_field: str):
         """
         :param session: SQLAlchemy session
         :param item_model: Das Item-Modell (z. B. OrderItem)
         :param document_model: Das Dokument-Modell (z. B. Order)
+        :param document_id_field: Name des Foreign-Key-Feldes (z. B. "order_id", "quotation_id")
         """
         self.session = session
         self.item_model = item_model
         self.document_model = document_model
+        self.document_id_field = document_id_field
 
     def get_document_by_id(self, document_id: int):
         return self.session.scalars(
@@ -31,17 +33,19 @@ class BaseItemService:
         if not document:
             raise ValueError(f"Document with id {document_id} not found.")
 
-        new_item = self.item_model(
-            document_id=document_id,
-            product_id=product_id,
-            quantity=quantity,
-            unit_price=unit_price
-        )
+        kwargs = {
+            self.document_id_field: document_id,
+            "product_id": product_id,
+            "quantity": quantity,
+            "unit_price": unit_price
+        }
+
+        new_item = self.item_model(**kwargs)
 
         try:
             self.session.add(new_item)
             self.session.commit()
-            logger.info(f"Item created successfully for document id {document_id}.")
+            logger.info(f"Item created successfully for {self.document_id_field}={document_id}.")
         except SQLAlchemyError as e:
             self.session.rollback()
             logger.error(f"Error creating item: {e}")
