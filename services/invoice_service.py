@@ -13,10 +13,15 @@ class InvoiceService:
     def __init__(self, session):
         self.session = session
 
+
     def get_invoice_by_id(self, invoice_id: int) -> Invoice | None:
-        return self.session.scalars(
-            select(Invoice).where(Invoice.id == invoice_id)
-        ).first()
+        stmt = select(Invoice).where(Invoice.id == invoice_id)
+        invoice = self.session.scalars(stmt).first()
+
+        if not invoice:
+            raise ValueError(f"Invoice with id {invoice_id} not found.")
+        return invoice
+
 
     def create_invoice(
         self,
@@ -57,6 +62,7 @@ class InvoiceService:
             logger.error(f"Error creating invoice: {e}")
             raise
 
+
     def get_all_invoices(self):
         try:
             return self.session.scalars(select(Invoice)).all()
@@ -64,13 +70,12 @@ class InvoiceService:
             logger.error(f"Error retrieving invoices: {e}")
             return []
 
+
     def update_invoice_status(self, invoice_id: int, new_status: str) -> None:
+        invoice = self.get_invoice_by_id(invoice_id)
+
         if new_status.upper() not in InvoiceStatus.__members__:
             raise ValueError(f"Invalid invoice status: {new_status}")
-
-        invoice = self.get_invoice_by_id(invoice_id)
-        if not invoice:
-            raise ValueError(f"Invoice with id {invoice_id} not found.")
 
         try:
             invoice.status = InvoiceStatus[new_status.upper()]
@@ -81,10 +86,9 @@ class InvoiceService:
             logger.error(f"Error updating invoice status: {e}")
             raise
 
+
     def update_invoice_notes(self, invoice_id: int, new_notes: str) -> None:
         invoice = self.get_invoice_by_id(invoice_id)
-        if not invoice:
-            raise ValueError(f"Invoice with id {invoice_id} not found.")
 
         try:
             invoice.notes = new_notes
@@ -95,10 +99,9 @@ class InvoiceService:
             logger.error(f"Error updating invoice notes: {e}")
             raise
 
+
     def delete_invoice(self, invoice_id: int) -> None:
         invoice = self.get_invoice_by_id(invoice_id)
-        if not invoice:
-            raise ValueError(f"Invoice with id '{invoice_id}' does not exist.")
 
         try:
             self.session.delete(invoice)

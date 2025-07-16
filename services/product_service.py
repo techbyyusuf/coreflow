@@ -12,6 +12,7 @@ class ProductService:
     def __init__(self, session):
         self.session = session
 
+
     def create_product(self, name: str, unit_price: float, unit: str, description: str = None) -> None:
         new_product = Product(
             name=name,
@@ -28,6 +29,7 @@ class ProductService:
             logger.error(f"Error creating product '{name}': {e}")
             raise
 
+
     def get_all_products(self):
         try:
             return self.session.scalars(select(Product)).all()
@@ -35,10 +37,15 @@ class ProductService:
             logger.error(f"Error retrieving products: {e}")
             return []
 
+
     def get_product_by_id(self, product_id: int) -> Product | None:
-        return self.session.scalars(
+        product = self.session.scalars(
             select(Product).where(Product.id == product_id)
         ).first()
+        if not product:
+            raise ValueError(f"Product with id '{product_id}' not found.")
+        return product
+
 
     def update_product_price(self, product_id: int, new_price: float) -> None:
         product = self.get_product_by_id(product_id)
@@ -54,10 +61,9 @@ class ProductService:
             logger.error(f"Error updating product price: {e}")
             raise
 
+
     def update_product_name(self, product_id: int, new_name: str) -> None:
         product = self.get_product_by_id(product_id)
-        if not product:
-            raise ValueError(f"Product with id {product_id} not found.")
 
         existing_product = self.session.scalars(
             select(Product).where(Product.name == new_name)
@@ -74,10 +80,9 @@ class ProductService:
             logger.error(f"Error updating product name: {e}")
             raise
 
+
     def update_product_description(self, product_id: int, new_description: str) -> None:
         product = self.get_product_by_id(product_id)
-        if not product:
-            raise ValueError(f"Product with id {product_id} not found.")
 
         try:
             product.description = new_description
@@ -88,10 +93,9 @@ class ProductService:
             logger.error(f"Error updating product description: {e}")
             raise
 
+
     def update_product_unit(self, product_id: int, new_unit: str) -> None:
         product = self.get_product_by_id(product_id)
-        if not product:
-            raise ValueError(f"Product with id {product_id} not found.")
 
         if new_unit.upper() not in UnitType.__members__:
             raise ValueError(f"Invalid unit: {new_unit}")
@@ -105,10 +109,9 @@ class ProductService:
             logger.error(f"Error updating product unit: {e}")
             raise
 
+
     def delete_product(self, product_id: int) -> None:
         product = self.get_product_by_id(product_id)
-        if not product:
-            raise ValueError(f"Product with id '{product_id}' does not exist.")
 
         try:
             self.session.delete(product)

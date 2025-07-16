@@ -19,9 +19,12 @@ class CustomerService:
         return re.match(pattern, email) is not None
 
     def get_customer_by_id(self, customer_id: int) -> Customer | None:
-        return self.session.scalars(
+        customer = self.session.scalars(
             select(Customer).where(Customer.id == customer_id)
         ).first()
+        if not customer:
+            raise ValueError(f"Customer with id '{customer_id}' not found!")
+        return
 
     def create_customer(
         self,
@@ -95,8 +98,6 @@ class CustomerService:
             raise ValueError("Company name already in use by another customer.")
 
         customer = self.get_customer_by_id(customer_id)
-        if not customer:
-            raise ValueError(f"Customer with id {customer_id} not found.")
 
         try:
             customer.company_name = new_company_name
@@ -118,8 +119,6 @@ class CustomerService:
             raise ValueError("Email address already in use by another customer.")
 
         customer = self.get_customer_by_id(customer_id)
-        if not customer:
-            raise ValueError(f"Customer with id {customer_id} not found.")
 
         try:
             customer.email = new_email
@@ -132,8 +131,6 @@ class CustomerService:
 
     def update_customer_phone(self, customer_id: int, new_phone: str) -> None:
         customer = self.get_customer_by_id(customer_id)
-        if not customer:
-            raise ValueError(f"Customer with id {customer_id} not found.")
 
         try:
             customer.phone = new_phone
@@ -146,8 +143,6 @@ class CustomerService:
 
     def update_customer_address(self, customer_id: int, new_address: str) -> None:
         customer = self.get_customer_by_id(customer_id)
-        if not customer:
-            raise ValueError(f"Customer with id {customer_id} not found.")
 
         try:
             customer.address = new_address
@@ -160,8 +155,6 @@ class CustomerService:
 
     def update_customer_notes(self, customer_id: int, new_notes: str) -> None:
         customer = self.get_customer_by_id(customer_id)
-        if not customer:
-            raise ValueError(f"Customer with id {customer_id} not found.")
 
         try:
             customer.notes = new_notes
@@ -174,8 +167,6 @@ class CustomerService:
 
     def delete_customer(self, customer_id: int) -> None:
         customer = self.get_customer_by_id(customer_id)
-        if not customer:
-            raise ValueError(f"Customer with id '{customer_id}' does not exist.")
 
         try:
             self.session.delete(customer)

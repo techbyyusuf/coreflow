@@ -13,9 +13,12 @@ class QuotationService:
         self.session = session
 
     def get_quotation_by_id(self, quotation_id: int) -> Quotation | None:
-        return self.session.scalars(
-            select(Quotation).where(Quotation.id == quotation_id)
-        ).first()
+        stmt = select(Quotation).where(Quotation.id == quotation_id)
+        quotation =  self.session.scalars(stmt).first()
+
+        if not quotation:
+            raise ValueError(f"Quotation with id {quotation_id} not found.")
+        return quotation
 
     def create_quotation(
         self,
@@ -65,8 +68,6 @@ class QuotationService:
 
     def update_quotation_status(self, quotation_id: int, new_status: str) -> None:
         quotation = self.get_quotation_by_id(quotation_id)
-        if not quotation:
-            raise ValueError(f"Quotation with id {quotation_id} not found.")
 
         if new_status.upper() not in QuotationStatus.__members__:
             raise ValueError(f"Invalid quotation status: {new_status}")
@@ -82,8 +83,6 @@ class QuotationService:
 
     def update_quotation_notes(self, quotation_id: int, new_notes: str) -> None:
         quotation = self.get_quotation_by_id(quotation_id)
-        if not quotation:
-            raise ValueError(f"Quotation with id {quotation_id} not found.")
 
         try:
             quotation.notes = new_notes
@@ -96,8 +95,6 @@ class QuotationService:
 
     def delete_quotation(self, quotation_id: int) -> None:
         quotation = self.get_quotation_by_id(quotation_id)
-        if not quotation:
-            raise ValueError(f"Quotation with id '{quotation_id}' does not exist.")
 
         try:
             self.session.delete(quotation)

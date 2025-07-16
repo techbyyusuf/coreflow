@@ -13,15 +13,22 @@ class OrderItemService:
     def __init__(self, session):
         self.session = session
 
+
     def get_order_by_id(self, order_id: int):
-        return self.session.scalars(
-            select(Order).where(Order.id == order_id)
-        ).first()
+        stmt = select(Order).where(Order.id == order_id)
+        order = self.session.scalars(stmt).first()
+        if not order:
+            raise ValueError(f"Order with id '{order_id}' not found.")
+        return order
+
 
     def get_item_by_id(self, item_id: int):
-        return self.session.scalars(
-            select(OrderItem).where(OrderItem.id == item_id)
-        ).first()
+        stmt = select(OrderItem).where(OrderItem.id == item_id)
+        item = self.session.scalars(stmt).first()
+        if not item:
+            raise ValueError(f"Item with id '{item_id}' does not exist.")
+        return item
+
 
     def create_item(self, order_id: int, product_id: int, quantity: float, unit_price: float) -> None:
         order = self.get_order_by_id(order_id)
@@ -44,10 +51,9 @@ class OrderItemService:
             logger.error(f"Error creating order item: {e}")
             raise
 
+
     def update_item(self, item_id: int, new_quantity: float, new_unit_price: float) -> None:
         item = self.get_item_by_id(item_id)
-        if not item:
-            raise ValueError(f"Item with id {item_id} not found.")
 
         try:
             item.quantity = new_quantity
@@ -59,10 +65,9 @@ class OrderItemService:
             logger.error(f"Error updating order item: {e}")
             raise
 
+
     def delete_item(self, item_id: int) -> None:
         item = self.get_item_by_id(item_id)
-        if not item:
-            raise ValueError(f"Item with id '{item_id}' does not exist.")
 
         try:
             self.session.delete(item)
@@ -72,6 +77,7 @@ class OrderItemService:
             self.session.rollback()
             logger.error(f"Error deleting order item with id '{item_id}': {e}")
             raise
+
 
     def get_all_items(self):
         try:

@@ -12,10 +12,14 @@ class OrderService:
     def __init__(self, session):
         self.session = session
 
+
     def get_order_by_id(self, order_id: int) -> Order | None:
-        return self.session.scalars(
-            select(Order).where(Order.id == order_id)
-        ).first()
+        stmt = select(Order).where(Order.id == order_id)
+        order = self.session.scalars(stmt).first()
+        if not order:
+            raise ValueError(f"Order with id '{order_id}' not found.")
+        return order
+
 
     def create_order(
         self,
@@ -60,6 +64,7 @@ class OrderService:
             logger.error(f"Error creating order: {e}")
             raise
 
+
     def get_all_orders(self):
         try:
             return self.session.scalars(select(Order)).all()
@@ -67,13 +72,12 @@ class OrderService:
             logger.error(f"Error retrieving orders: {e}")
             return []
 
+
     def update_order_status(self, order_id: int, new_status: str) -> None:
+        order = self.get_order_by_id(order_id)
+
         if new_status.upper() not in OrderStatus.__members__:
             raise ValueError(f"Invalid order status: {new_status}")
-
-        order = self.get_order_by_id(order_id)
-        if not order:
-            raise ValueError(f"Order with id {order_id} not found.")
 
         try:
             order.status = OrderStatus[new_status.upper()]
@@ -84,10 +88,9 @@ class OrderService:
             logger.error(f"Error updating order status: {e}")
             raise
 
+
     def update_order_reference(self, order_id: int, new_reference: str) -> None:
         order = self.get_order_by_id(order_id)
-        if not order:
-            raise ValueError(f"Order with id {order_id} not found.")
 
         try:
             order.reference = new_reference
@@ -98,10 +101,9 @@ class OrderService:
             logger.error(f"Error updating order reference: {e}")
             raise
 
+
     def update_order_notes(self, order_id: int, new_notes: str) -> None:
         order = self.get_order_by_id(order_id)
-        if not order:
-            raise ValueError(f"Order with id {order_id} not found.")
 
         try:
             order.notes = new_notes
@@ -112,10 +114,9 @@ class OrderService:
             logger.error(f"Error updating order notes: {e}")
             raise
 
+
     def delete_order(self, order_id: int) -> None:
         order = self.get_order_by_id(order_id)
-        if not order:
-            raise ValueError(f"Order with id '{order_id}' does not exist.")
 
         try:
             self.session.delete(order)
@@ -132,9 +133,8 @@ class OrderService:
             raise ValueError(f"Invalid order status: {status}")
 
         try:
-            return self.session.scalars(
-                select(Order).where(Order.status == OrderStatus[status.upper()])
-            ).all()
+            stmt = select(Order).where(Order.status == OrderStatus[status.upper()])
+            return self.session.scalars(stmt).all()
         except SQLAlchemyError as e:
             logger.error(f"Error retrieving orders with status '{status}': {e}")
             return []

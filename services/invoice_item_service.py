@@ -13,20 +13,25 @@ class InvoiceItemService:
     def __init__(self, session):
         self.session = session
 
-    def get_invoice_by_id(self, invoice_id: int):
-        return self.session.scalars(
-            select(Invoice).where(Invoice.id == invoice_id)
-        ).first()
+    def validate_invoice_exists(self, invoice_id: int):
+        stmt = select(Invoice).where(Invoice.id == invoice_id)
+        invoice =  self.session.scalars(stmt).first()
 
-    def get_item_by_id(self, item_id: int):
-        return self.session.scalars(
-            select(InvoiceItem).where(InvoiceItem.id == item_id)
-        ).first()
-
-    def create_item(self, invoice_id: int, product_id: int, quantity: float, unit_price: float) -> None:
-        invoice = self.get_invoice_by_id(invoice_id)
         if not invoice:
             raise ValueError(f"Invoice with id {invoice_id} not found.")
+        return invoice
+
+    def get_item_by_id(self, item_id: int):
+        stmt = select(InvoiceItem).where(InvoiceItem.id == item_id)
+        item = self.session.scalars(stmt).first()
+
+        if not item:
+            raise ValueError(f"Item with id {item_id} not found.")
+        return item
+
+
+    def create_item(self, invoice_id: int, product_id: int, quantity: float, unit_price: float) -> None:
+        self.validate_invoice_exists(invoice_id)
 
         new_item = InvoiceItem(
             invoice_id=invoice_id,
@@ -44,10 +49,9 @@ class InvoiceItemService:
             logger.error(f"Error creating invoice item: {e}")
             raise
 
+
     def update_item(self, item_id: int, new_quantity: float, new_unit_price: float) -> None:
         item = self.get_item_by_id(item_id)
-        if not item:
-            raise ValueError(f"Item with id {item_id} not found.")
 
         try:
             item.quantity = new_quantity
@@ -59,10 +63,9 @@ class InvoiceItemService:
             logger.error(f"Error updating invoice item: {e}")
             raise
 
+
     def delete_item(self, item_id: int) -> None:
         item = self.get_item_by_id(item_id)
-        if not item:
-            raise ValueError(f"Item with id '{item_id}' does not exist.")
 
         try:
             self.session.delete(item)
@@ -72,6 +75,7 @@ class InvoiceItemService:
             self.session.rollback()
             logger.error(f"Error deleting invoice item with id '{item_id}': {e}")
             raise
+
 
     def get_all_items(self):
         try:

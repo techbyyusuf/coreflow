@@ -13,20 +13,27 @@ class QuotationItemService:
     def __init__(self, session):
         self.session = session
 
-    def get_quotation_by_id(self, quotation_id: int):
-        return self.session.scalars(
-            select(Quotation).where(Quotation.id == quotation_id)
-        ).first()
 
-    def get_item_by_id(self, item_id: int):
-        return self.session.scalars(
-            select(QuotationItem).where(QuotationItem.id == item_id)
-        ).first()
+    def validate_quotation_exists(self, quotation_id: int):
+        stmt = select(Quotation).where(Quotation.id == quotation_id)
+        quotation =  self.session.scalars(stmt).first()
 
-    def create_item(self, quotation_id: int, product_id: int, quantity: float, unit_price: float) -> None:
-        quotation = self.get_quotation_by_id(quotation_id)
         if not quotation:
             raise ValueError(f"Quotation with id {quotation_id} not found.")
+        return quotation
+
+
+    def get_item_by_id(self, item_id: int):
+        stmt = select(QuotationItem).where(QuotationItem.id == item_id)
+        item =  self.session.scalars(stmt).first()
+
+        if not item:
+            raise ValueError(f"Item with id {item_id} not found.")
+        return item
+
+
+    def create_item(self, quotation_id: int, product_id: int, quantity: float, unit_price: float) -> None:
+        self.validate_quotation_exists(quotation_id)
 
         new_item = QuotationItem(
             quotation_id=quotation_id,
@@ -44,10 +51,9 @@ class QuotationItemService:
             logger.error(f"Error creating quotation item: {e}")
             raise
 
+
     def update_item(self, item_id: int, new_quantity: float, new_unit_price: float) -> None:
         item = self.get_item_by_id(item_id)
-        if not item:
-            raise ValueError(f"Item with id {item_id} not found.")
 
         try:
             item.quantity = new_quantity
@@ -59,10 +65,9 @@ class QuotationItemService:
             logger.error(f"Error updating quotation item: {e}")
             raise
 
+
     def delete_item(self, item_id: int) -> None:
         item = self.get_item_by_id(item_id)
-        if not item:
-            raise ValueError(f"Item with id '{item_id}' does not exist.")
 
         try:
             self.session.delete(item)
@@ -72,6 +77,7 @@ class QuotationItemService:
             self.session.rollback()
             logger.error(f"Error deleting quotation item with id '{item_id}': {e}")
             raise
+
 
     def get_all_items(self):
         try:
