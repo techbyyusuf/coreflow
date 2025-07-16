@@ -33,37 +33,68 @@ class CustomerService:
         return re.match(pattern, email) is not None
 
 
+    def get_customer_by_id(self, customer_id: int) -> Customer | None:
+        """
+        Retrieves a single customer by ID.
+
+        :param customer_id: ID of the customer
+        :return: Customer object if found, otherwise None
+        """
+        return self.session.scalars(
+            select(Customer).filter_by(id=customer_id)).first()
+
+
     def create_customer(
         self,
-        user_id: int,
-        first_name: str,
-        last_name: str,
-        email: str,
-        phone: str,
-        address: str,
-        tax_id: int,
+        name: str = None,
+        company_name: str = None,
+        email: str = None,
+        phone: str = None,
+        address: str = None,
+        tax_id: str = None,
         notes: str = None
     ) -> None:
         """
         Creates a new customer in the database after validating email.
-        :param user_id: ID of the related user
-        :param first_name: Customer first name
-        :param last_name: Customer last name
+        :param name: Customer name
+        :param company_name: Customer company name
         :param email: Customer email
         :param phone: Phone number
         :param address: Address
         :param tax_id: Tax ID (must be unique)
         :param notes: Optional notes
-        :raises ValueError: If email is invalid
+        :raises ValueError: If email is invalid or neither name or company_name is not given
         :raises SQLAlchemyError: If database error occurs
         """
-        if not self.is_valid_email(email):
+
+        if not name and not company_name:
+            raise ValueError(
+                "At least one of 'name' or 'company_name' must be provided.")
+
+        if email is not None and not self.is_valid_email(email):
             raise ValueError("Invalid email address format")
 
+        if email is not None:
+            existing_customer = self.session.scalars(
+                select(Customer)).filter_by(email=email).first()
+            if existing_customer:
+                raise ValueError("Email address already in use.")
+
+        if company_name is not None:
+            existing_customer = self.session.scalars(
+                select(Customer)).filter_by(company_name=company_name).first()
+            if existing_customer:
+                raise ValueError("Company name already in use.")
+
+        if tax_id is not None:
+            existing_customer = self.session.scalars(
+                select(Customer)).filter_by(tax_id=tax_id).first()
+            if existing_customer:
+                raise ValueError("Tax ID already in use.")
+
         new_customer = Customer(
-            user_id=user_id,
-            first_name=first_name,
-            last_name=last_name,
+            name=name,
+            company_name=company_name,
             email=email,
             phone=phone,
             address=address,
@@ -74,10 +105,12 @@ class CustomerService:
         try:
             self.session.add(new_customer)
             self.session.commit()
-            logger.info(f"Customer '{first_name} {last_name}' created successfully.")
+
+            identifier = name if name else company_name
+            logger.info(f"Customer '{identifier}' created successfully.")
         except SQLAlchemyError as e:
             self.session.rollback()
-            logger.error(f"Error creating customer '{first_name} {last_name}': {e}")
+            logger.error(f"Error creating customer '{name}': {e}")
             raise
 
 
@@ -93,6 +126,35 @@ class CustomerService:
             return []
 
 
+    def update_customer_company_name(self, customer_id: int,
+                                     new_company_name: str) -> None:
+        """
+        Updates the company name of a customer after checking uniqueness.
+
+        :param customer_id: ID of the customer
+        :param new_company_name: New company name
+        :raises ValueError: If company name already in use or customer not found
+        """
+        existing_customer = self.session.scalars(select(Customer)).filter_by(
+            company_name=new_company_name).first()
+        if existing_customer and existing_customer.id != customer_id:
+            raise ValueError("Company name already in use by another customer.")
+
+        customer = self.get_customer_by_id(customer_id)
+        if not customer:
+            raise ValueError(f"Customer with id {customer_id} not found.")
+
+        try:
+            customer.company_name = new_company_name
+            self.session.commit()
+            logger.info(
+                f"Customer company name updated successfully for id {customer_id}.")
+        except SQLAlchemyError as e:
+            self.session.rollback()
+            logger.error(f"Error updating customer company name: {e}")
+            raise
+
+
     def update_customer_email(self, customer_id: int, new_email: str) -> None:
         """
         Updates the email address of a customer.
@@ -103,15 +165,21 @@ class CustomerService:
         if not self.is_valid_email(new_email):
             raise ValueError("Invalid email address format")
 
-        try:
-            customer = self.session.scalars(select(Customer)).filter_by(id=customer_id).first()
-            if not customer:
-                raise ValueError(f"Customer with id {customer_id} not found.")
+        existing_customer = self.session.scalars(select(Customer)).filter_by(
+            email=new_email).first()
+        if existing_customer and existing_customer.id != customer_id:
+            raise ValueError(
+                "Email address already in use by another customer.")
 
+        customer = self.get_customer_by_id(customer_id)
+        if not customer:
+            raise ValueError(f"Customer with id {customer_id} not found.")
+
+        try:
             customer.email = new_email
             self.session.commit()
             logger.info(f"Customer email updated successfully for id {customer_id}.")
-        except (SQLAlchemyError, ValueError) as e:
+        except SQLAlchemyError as e:
             self.session.rollback()
             logger.error(f"Error updating customer email: {e}")
             raise
@@ -120,34 +188,45 @@ class CustomerService:
     def update_customer_phone(self, customer_id: int, new_phone: str) -> None:
         """
         Updates the phone number of a customer.
-        """
-        try:
-            customer = self.session.scalars(select(Customer)).filter_by(id=customer_id).first()
-            if not customer:
-                raise ValueError(f"Customer with id {customer_id} not found.")
 
+        :param customer_id: ID of the customer
+        :param new_phone: New phone number
+        :raises ValueError: If customer not found
+        """
+        customer = self.get_customer_by_id(customer_id)
+        if not customer:
+            raise ValueError(f"Customer with id {customer_id} not found.")
+
+        try:
             customer.phone = new_phone
             self.session.commit()
-            logger.info(f"Customer phone updated successfully for id {customer_id}.")
-        except (SQLAlchemyError, ValueError) as e:
+            logger.info(
+                f"Customer phone updated successfully for id {customer_id}.")
+        except SQLAlchemyError as e:
             self.session.rollback()
             logger.error(f"Error updating customer phone: {e}")
             raise
 
 
-    def update_customer_address(self, customer_id: int, new_address: str) -> None:
+    def update_customer_address(self, customer_id: int,
+                                new_address: str) -> None:
         """
         Updates the address of a customer.
-        """
-        try:
-            customer = self.session.scalars(select(Customer)).filter_by(id=customer_id).first()
-            if not customer:
-                raise ValueError(f"Customer with id {customer_id} not found.")
 
+        :param customer_id: ID of the customer
+        :param new_address: New address
+        :raises ValueError: If customer not found
+        """
+        customer = self.get_customer_by_id(customer_id)
+        if not customer:
+            raise ValueError(f"Customer with id {customer_id} not found.")
+
+        try:
             customer.address = new_address
             self.session.commit()
-            logger.info(f"Customer address updated successfully for id {customer_id}.")
-        except (SQLAlchemyError, ValueError) as e:
+            logger.info(
+                f"Customer address updated successfully for id {customer_id}.")
+        except SQLAlchemyError as e:
             self.session.rollback()
             logger.error(f"Error updating customer address: {e}")
             raise
@@ -156,16 +235,21 @@ class CustomerService:
     def update_customer_notes(self, customer_id: int, new_notes: str) -> None:
         """
         Updates the notes field of a customer.
-        """
-        try:
-            customer = self.session.scalars(select(Customer)).filter_by(id=customer_id).first()
-            if not customer:
-                raise ValueError(f"Customer with id {customer_id} not found.")
 
+        :param customer_id: ID of the customer
+        :param new_notes: New notes
+        :raises ValueError: If customer not found
+        """
+        customer = self.get_customer_by_id(customer_id)
+        if not customer:
+            raise ValueError(f"Customer with id {customer_id} not found.")
+
+        try:
             customer.notes = new_notes
             self.session.commit()
-            logger.info(f"Customer notes updated successfully for id {customer_id}.")
-        except (SQLAlchemyError, ValueError) as e:
+            logger.info(
+                f"Customer notes updated successfully for id {customer_id}.")
+        except SQLAlchemyError as e:
             self.session.rollback()
             logger.error(f"Error updating customer notes: {e}")
             raise
@@ -177,11 +261,12 @@ class CustomerService:
         :param customer_id: ID of the customer to delete
         :raises ValueError: If customer not found
         """
-        try:
-            customer = self.session.scalars(select(Customer)).filter_by(id=customer_id).first()
-            if not customer:
-                raise ValueError(f"Customer with id '{customer_id}' does not exist.")
+        customer = self.get_customer_by_id(customer_id)
+        if not customer:
+            raise ValueError(
+                f"Customer with id '{customer_id}' does not exist.")
 
+        try:
             self.session.delete(customer)
             self.session.commit()
             logger.info(f"Customer with id '{customer_id}' deleted successfully.")

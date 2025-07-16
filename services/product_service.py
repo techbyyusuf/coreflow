@@ -3,6 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
 from models.product import Product
+from models.enums import UnitType
 
 
 logging.basicConfig(level=logging.INFO)
@@ -20,10 +21,9 @@ class ProductService:
         """
         self.session = session
 
-    def create_product(self, user_id: int, name: str, unit_price: float, unit: int, description: str = None) -> None:
+    def create_product(self, name: str, unit_price: float, unit: str, description: str = None) -> None:
         """
         Creates a new product in the database.
-        :param user_id: ID of the user who owns the product
         :param name: Product name
         :param unit_price: Unit price of the product
         :param unit: Unit count
@@ -31,10 +31,9 @@ class ProductService:
         :raises SQLAlchemyError: If database error occurs
         """
         new_product = Product(
-            user_id=user_id,
             name=name,
             unit_price=unit_price,
-            unit=unit,
+            unit=UnitType[unit.upper()],
             description=description
         )
 
@@ -58,6 +57,17 @@ class ProductService:
             logger.error(f"Error retrieving products: {e}")
             return []
 
+
+    def get_product_by_id(self, product_id: int) -> Product | None:
+        """
+        Retrieves a single product by ID.
+        :param product_id: ID of the product
+        :return: Product object if found, otherwise None
+        """
+        return self.session.scalars(
+            select(Product).filter_by(id=product_id)).first()
+
+
     def update_product_price(self, product_id: int, new_price: float) -> None:
         """
         Updates the unit price of a product.
@@ -66,15 +76,15 @@ class ProductService:
         :raises ValueError: If product not found
         :raises SQLAlchemyError: If database error occurs
         """
-        try:
-            product = self.session.scalars(select(Product)).filter_by(id=product_id).first()
-            if not product:
-                raise ValueError(f"Product with id {product_id} not found.")
+        product = self.get_product_by_id(product_id)
+        if not product:
+            raise ValueError(f"Product with id {product_id} not found.")
 
+        try:
             product.unit_price = new_price
             self.session.commit()
             logger.info(f"Product price updated successfully for id {product_id}.")
-        except (SQLAlchemyError, ValueError) as e:
+        except SQLAlchemyError as e:
             self.session.rollback()
             logger.error(f"Error updating product price: {e}")
             raise
@@ -87,11 +97,16 @@ class ProductService:
         :raises ValueError: If product not found
         :raises SQLAlchemyError: If database error occurs
         """
-        try:
-            product = self.session.scalars(select(Product)).filter_by(id=product_id).first()
-            if not product:
-                raise ValueError(f"Product with id {product_id} not found.")
+        product = self.get_product_by_id(product_id)
+        if not product:
+            raise ValueError(f"Product with id {product_id} not found.")
 
+        existing_product = self.session.scalars(select(Product)).filter_by(
+            name=new_name).first()
+        if existing_product and existing_product.id != product_id:
+            raise ValueError("Product name already in use by another product.")
+
+        try:
             product.name = new_name
             self.session.commit()
             logger.info(f"Product name updated successfully for id {product_id}.")
@@ -108,20 +123,20 @@ class ProductService:
         :raises ValueError: If product not found
         :raises SQLAlchemyError: If database error occurs
         """
-        try:
-            product = self.session.scalars(select(Product)).filter_by(id=product_id).first()
-            if not product:
-                raise ValueError(f"Product with id {product_id} not found.")
+        product = self.get_product_by_id(product_id)
+        if not product:
+            raise ValueError(f"Product with id {product_id} not found.")
 
+        try:
             product.description = new_description
             self.session.commit()
             logger.info(f"Product description updated successfully for id {product_id}.")
-        except (SQLAlchemyError, ValueError) as e:
+        except SQLAlchemyError as e:
             self.session.rollback()
             logger.error(f"Error updating product description: {e}")
             raise
 
-    def update_product_unit(self, product_id: int, new_unit: int) -> None:
+    def update_product_unit(self, product_id: int, new_unit: str) -> None:
         """
         Updates the unit count of a product.
         :param product_id: ID of the product to update
@@ -129,15 +144,18 @@ class ProductService:
         :raises ValueError: If product not found
         :raises SQLAlchemyError: If database error occurs
         """
-        try:
-            product = self.session.scalars(select(Product)).filter_by(id=product_id).first()
-            if not product:
-                raise ValueError(f"Product with id {product_id} not found.")
+        product = self.get_product_by_id(product_id)
+        if not product:
+            raise ValueError(f"Product with id {product_id} not found.")
 
-            product.unit = new_unit
+        if new_unit.upper() not in UnitType.__members__:
+            raise ValueError(f"Invalid unit: {new_unit}")
+
+        try:
+            product.unit = UnitType[new_unit.upper()]
             self.session.commit()
             logger.info(f"Product unit updated successfully for id {product_id}.")
-        except (SQLAlchemyError, ValueError) as e:
+        except SQLAlchemyError as e:
             self.session.rollback()
             logger.error(f"Error updating product unit: {e}")
             raise
@@ -149,11 +167,11 @@ class ProductService:
         :raises ValueError: If product not found
         :raises SQLAlchemyError: If database error occurs
         """
-        try:
-            product = self.session.scalars(select(Product)).filter_by(id=product_id).first()
-            if not product:
-                raise ValueError(f"Product with id '{product_id}' does not exist.")
+        product = self.get_product_by_id(product_id)
+        if not product:
+            raise ValueError(f"Product with id '{product_id}' does not exist.")
 
+        try:
             self.session.delete(product)
             self.session.commit()
             logger.info(f"Product with id '{product_id}' deleted successfully.")

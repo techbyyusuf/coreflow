@@ -4,6 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
 from models.user import User
+from models.enums import UserRole
 
 
 logging.basicConfig(level=logging.INFO)
@@ -53,33 +54,48 @@ class UserService:
             return False
         return True
 
-    def create_user(self, first_name: str, last_name: str, email: str, password: str) -> None:
+    def create_user(self,name: str,
+                    email: str,
+                    password: str,
+                    role: str = "employee") -> None:
         """
         Creates a new user in the database after validating email and password.
 
-        :param first_name: User's first name
-        :param last_name: User's last name
+        :param name: User's name
         :param email: User email
         :param password: User password
-        :raises ValueError: If email or password are invalid
+        :param role: user role, default: employee
+        :raises ValueError: If email, password or role are invalid
         :raises SQLAlchemyError: If database error occurs
         """
         if not self.is_valid_email(email):
             raise ValueError("Invalid email address format")
         if not self.is_valid_password(password):
-            raise ValueError("Password too weak (min. 8 chars, at least 1 digit, at least 1 special character)")
+            raise ValueError(
+                "Password too weak (min. 8 chars, at least 1 digit, at least 1 special character)")
 
-        new_user = User(first_name=first_name, last_name=last_name, email=email, password=password)
+        existing_user = self.session.scalars(select(User)).filter_by(
+            email=email).first()
+        if existing_user:
+            raise ValueError("Email address already in use.")
+
+        role_upper = role.upper()
+        if role_upper not in UserRole.__members__:
+            raise ValueError(f"Invalid role: {role}")
+
+        new_user = User(name=name, email=email, password=password,
+                        role=UserRole[role_upper])
 
         try:
             self.session.add(new_user)
             self.session.commit()
-        except SQLAlchemyError:
+            logger.info(f"User '{name}' created successfully.")
+        except SQLAlchemyError as e:
             self.session.rollback()
-            logger.error(f"Error creating user '{first_name} {last_name}'. Possibly user already exists.")
+            logger.error(f"Error creating user '{name}': {e}")
             raise
 
-    def get_all_users(self):
+    def get_all_users(self) -> list[User]:
         """
         Retrieves all users from the database.
 
@@ -90,6 +106,17 @@ class UserService:
         except SQLAlchemyError as e:
             logger.error(f"Error retrieving users: {e}")
             return []
+
+    def get_user_by_id(self, user_id: int) -> User | None:
+        """
+        Retrieves a single user by ID.
+
+        :param user_id: ID of the user
+        :return: User object if found, otherwise None
+        """
+        logger.info(f"Searching for user with id '{user_id}'.")
+        return self.session.scalars(select(User).filter_by(id=user_id)).first()
+
 
     def update_user_email(self, user_id: int, new_email: str) -> None:
         """
@@ -103,15 +130,21 @@ class UserService:
         if not self.is_valid_email(new_email):
             raise ValueError("Invalid email address format")
 
-        try:
-            user = self.session.scalars(select(User)).filter_by(id=user_id).first()
-            if not user:
-                raise ValueError(f"User with id {user_id} not found.")
+        existing_user = self.session.scalars(select(User)).filter_by(
+            email=new_email).first()
+        if existing_user and existing_user.id != user_id:
+            raise ValueError("Email address already in use by another user.")
 
+
+        user = self.get_user_by_id(user_id)
+        if not user:
+            raise ValueError(f"User with id {user_id} not found.")
+
+        try:
             user.email = new_email
             self.session.commit()
-
-        except (SQLAlchemyError, ValueError) as e:
+            logger.info(f"User email updated successfully for id '{user.id}'.")
+        except SQLAlchemyError as e:
             self.session.rollback()
             logger.error(f"Error updating user email: {e}")
             raise
@@ -128,14 +161,15 @@ class UserService:
         if not self.is_valid_password(new_password):
             raise ValueError("Password too weak (min. 8 chars, at least 1 digit, at least 1 special character)")
 
-        try:
-            user = self.session.scalars(select(User)).filter_by(id=user_id).first()
-            if not user:
-                raise ValueError(f"User with id '{user_id}' not found.")
+        user = self.get_user_by_id(user_id)
+        if not user:
+            raise ValueError(f"User with id '{user_id}' not found.")
 
+        try:
             user.password = new_password
             self.session.commit()
-        except (SQLAlchemyError, ValueError) as e:
+            logger.info(f"User password updated successfully for id '{user.id}'.")
+        except SQLAlchemyError as e:
             self.session.rollback()
             logger.error(f"Error updating user password: {e}")
             raise
@@ -148,14 +182,14 @@ class UserService:
         :raises ValueError: If user not found
         :raises SQLAlchemyError: If database error occurs
         """
-        try:
-            user = self.session.scalars(select(User)).filter_by(id=user_id).first()
-            if not user:
-                raise ValueError(f"User with id '{user_id}' does not exist.")
+        user = self.get_user_by_id(user_id)
+        if not user:
+            raise ValueError(f"User with id '{user_id}' does not exist.")
 
+        try:
             self.session.delete(user)
             self.session.commit()
-
+            logger.info(f"User with id '{user.id}' deleted successfully.")
         except SQLAlchemyError as e:
             self.session.rollback()
             logger.error(f"Error deleting user with id '{user_id}': {e}")

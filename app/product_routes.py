@@ -3,6 +3,13 @@ from sqlalchemy.orm import Session
 
 from services.product_service import ProductService
 from app.dependencies import get_db
+from schemas.product_schemas import (
+    ProductCreate,
+    ProductUpdateName,
+    ProductUpdatePrice,
+    ProductUpdateUnit,
+    ProductUpdateDescription,
+)
 
 router = APIRouter(prefix="/products", tags=["products"])
 
@@ -17,57 +24,55 @@ def get_all_products(db: Session = Depends(get_db)):
 
 
 @router.post("/")
-def create_product(
-    user_id: int,
-    name: str,
-    unit_price: float,
-    unit: int,
-    description: str = None,
-    db: Session = Depends(get_db)
-):
+def create_product(payload: ProductCreate, db: Session = Depends(get_db)):
     try:
         service = ProductService(db)
-        service.create_product(user_id, name, unit_price, unit, description)
+        service.create_product(
+            name=payload.name,
+            unit_price=payload.unit_price,
+            unit=payload.unit,
+            description=payload.description,
+        )
         return {"message": "Product created successfully."}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.put("/{product_id}/name")
-def update_product_name(product_id: int, new_name: str, db: Session = Depends(get_db)):
+def update_product_name(product_id: int, payload: ProductUpdateName, db: Session = Depends(get_db)):
     try:
         service = ProductService(db)
-        service.update_product_name(product_id, new_name)
+        service.update_product_name(product_id, payload.new_name)
         return {"message": "Product name updated successfully."}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.put("/{product_id}/price")
-def update_product_price(product_id: int, new_price: float, db: Session = Depends(get_db)):
+def update_product_price(product_id: int, payload: ProductUpdatePrice, db: Session = Depends(get_db)):
     try:
         service = ProductService(db)
-        service.update_product_price(product_id, new_price)
+        service.update_product_price(product_id, payload.new_price)
         return {"message": "Product price updated successfully."}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.put("/{product_id}/unit")
-def update_product_unit(product_id: int, new_unit: int, db: Session = Depends(get_db)):
+def update_product_unit(product_id: int, payload: ProductUpdateUnit, db: Session = Depends(get_db)):
     try:
         service = ProductService(db)
-        service.update_product_unit(product_id, new_unit)
+        service.update_product_unit(product_id, payload.new_unit)
         return {"message": "Product unit updated successfully."}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.put("/{product_id}/description")
-def update_product_description(product_id: int, new_description: str, db: Session = Depends(get_db)):
+def update_product_description(product_id: int, payload: ProductUpdateDescription, db: Session = Depends(get_db)):
     try:
         service = ProductService(db)
-        service.update_product_description(product_id, new_description)
+        service.update_product_description(product_id, payload.new_description)
         return {"message": "Product description updated successfully."}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

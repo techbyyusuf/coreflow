@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
   db:
     image: postgres:17
@@ -10,13 +12,19 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
 
   app:
-    build: .
+    build:
+      context: .
+    container_name: coreflow-app-feature
     depends_on:
       - db
+    environment:
+      APP_ENV: feature
     ports:
-      - "8000:8000"
+      - "8001:8000"
+    restart: unless-stopped
 
 volumes:
   pgdata:
