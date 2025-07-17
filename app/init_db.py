@@ -29,10 +29,3 @@ def reset_db():
 if __name__ ==  "__main__":
     session = Session()
     session.close()
-
-
-
-
-#docker-compose down -v ----> stoppt und entfernt container
-#docker-compose build --no-cache  -----> baut container und images neu
-#docker-compose up -d       ------> startet Container

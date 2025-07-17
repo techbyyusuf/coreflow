@@ -5,6 +5,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from models.user import User
 from models.enums import UserRole
+from security.security import hash_password
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -53,7 +54,13 @@ class UserService:
         if role_upper not in UserRole.__members__:
             raise ValueError(f"Invalid role: {role}")
 
-        new_user = User(name=name, email=email, password=password, role=UserRole[role_upper])
+        hashed_pw = hash_password(password)
+
+        new_user = User(
+            name=name,
+            email=email,
+            password=hashed_pw,
+            role=UserRole[role_upper])
 
         try:
             self.session.add(new_user)

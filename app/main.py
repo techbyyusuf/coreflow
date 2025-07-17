@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 
+from app.auth_routes import router as auth_router
+
 from app.user_routes import router as user_router
 from app.customer_routes import router as customer_router
 from app.product_routes import router as product_router
@@ -18,6 +20,8 @@ from app.init_db import init_db
 app = FastAPI()
 
 init_db()
+
+app.include_router(auth_router)
 
 app.include_router(user_router)
 app.include_router(customer_router)
