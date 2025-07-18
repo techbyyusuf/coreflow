@@ -5,7 +5,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from models.user import User
 from models.enums import UserRole
-from security.security import hash_password
+from security.password_manager import hash_password
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

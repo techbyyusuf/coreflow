@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from services.order_item_service import OrderItemService
 from schemas.order_item_schemas import OrderItemCreateSchema, OrderItemUpdateSchema
-from app.dependencies import get_db
+from app.database.session import get_db
 
 router = APIRouter(prefix="/order-items", tags=["order-items"])
 

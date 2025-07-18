@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from services.product_service import ProductService
-from app.dependencies import get_db
+from app.database.session import get_db
 from schemas.product_schemas import (
     ProductCreate,
     ProductUpdateName,

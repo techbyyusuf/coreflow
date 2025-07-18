@@ -2,14 +2,19 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from services.user_service import UserService
-from app.dependencies import get_db
+from app.database.session import get_db
 from schemas.user_schemas import UserCreateSchema, UserUpdateEmailSchema, UserUpdatePasswordSchema
+from models.user import User
+from security.dependencies import require_admin, require_employee, require_viewer, require_self_or_admin
 
 router = APIRouter(prefix="/users", tags=["users"])
 
 
 @router.get("/")
-def get_all_users(db: Session = Depends(get_db)):
+def get_all_users(
+        db: Session = Depends(get_db),
+        user = Depends(require_admin)
+):
     try:
         service = UserService(db)
         return service.get_all_users()
@@ -18,7 +23,11 @@ def get_all_users(db: Session = Depends(get_db)):
 
 
 @router.post("/")
-def create_user(payload: UserCreateSchema, db: Session = Depends(get_db)):
+def create_user(
+        payload: UserCreateSchema,
+        db: Session = Depends(get_db),
+        user = Depends(require_admin)
+):
     try:
         service = UserService(db)
         service.create_user(
@@ -35,7 +44,11 @@ def create_user(payload: UserCreateSchema, db: Session = Depends(get_db)):
 
 
 @router.put("/{user_id}/email")
-def update_user_email(user_id: int, payload: UserUpdateEmailSchema, db: Session = Depends(get_db)):
+def update_user_email(user_id: int,
+                      payload: UserUpdateEmailSchema,
+                      db: Session = Depends(get_db),
+                      current_user: User = Depends(lambda: require_self_or_admin)
+                      ):
     try:
         service = UserService(db)
         service.update_user_email(user_id, payload.new_email)
@@ -47,7 +60,11 @@ def update_user_email(user_id: int, payload: UserUpdateEmailSchema, db: Session 
 
 
 @router.put("/{user_id}/password")
-def update_user_password(user_id: int, payload: UserUpdatePasswordSchema, db: Session = Depends(get_db)):
+def update_user_password(user_id: int,
+                         payload: UserUpdatePasswordSchema,
+                         db: Session = Depends(get_db),
+                         current_user: User = Depends(lambda: require_self_or_admin)
+                         ):
     try:
         service = UserService(db)
         service.update_user_password(user_id, payload.new_password)
@@ -59,7 +76,10 @@ def update_user_password(user_id: int, payload: UserUpdatePasswordSchema, db: Se
 
 
 @router.delete("/{user_id}")
-def delete_user(user_id: int, db: Session = Depends(get_db)):
+def delete_user(user_id: int,
+                db: Session = Depends(get_db),
+                user = Depends(require_admin)
+                ):
     try:
         service = UserService(db)
         service.delete_user(user_id)

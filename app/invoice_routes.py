@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from services.invoice_service import InvoiceService
 from schemas.invoice_schemas import InvoiceCreateSchema, InvoiceUpdateStatusSchema
-from app.dependencies import get_db
+from app.database.session import get_db
 
 router = APIRouter(prefix="/invoices", tags=["invoices"])
 

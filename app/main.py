@@ -15,7 +15,7 @@ from app.quotation_item_routes import router as quotation_item_router
 from app.invoice_routes import router as invoice_router
 from app.invoice_item_routes import router as invoice_item_router
 
-from app.init_db import init_db
+from app.database.session import init_db
 
 app = FastAPI()
 
@@ -44,6 +44,4 @@ def root():
 
 
 
-# docker-compose up --build      -- build für neuen Code
 # http://localhost:8001/docs
-# uvicorn app.api:app --reload --host 127.0.0.1 --port 8000

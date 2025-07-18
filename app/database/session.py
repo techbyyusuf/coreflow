@@ -17,13 +17,20 @@ def init_db():
     Base.metadata.create_all(engine)
 
 
-def reset_db():
+def delete_db():
     """
     Drops all tables and recreates them.
     Use with caution: all data will be lost!
     """
     Base.metadata.drop_all(bind=engine)
-    Base.metadata.create_all(bind=engine)
+
+
+def get_db():
+    db = Session()
+    try:
+        yield db
+    finally:
+        db.close()
 
 
 if __name__ ==  "__main__":

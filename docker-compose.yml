@@ -3,7 +3,7 @@ version: "3.9"
 services:
   db:
     image: postgres:17
-    container_name: my-postgres
+    container_name: coreflow-db
     environment:
       POSTGRES_USER: myuser
       POSTGRES_PASSWORD: mypassword
@@ -17,7 +17,7 @@ services:
   app:
     build:
       context: .
-    container_name: coreflow-app-feature
+    container_name: coreflow-app
     depends_on:
       - db
     environment:

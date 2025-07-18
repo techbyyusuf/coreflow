@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from services.quotation_item_service import QuotationItemService
 from schemas.quotation_item_schemas import QuotationItemCreateSchema, QuotationItemUpdateSchema
-from app.dependencies import get_db
+from app.database.session import get_db
 
 router = APIRouter(prefix="/quotation-items", tags=["quotation_items"])
 
