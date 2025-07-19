@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from services.customer_service import CustomerService
+from security.dependencies import require_admin, require_viewer, require_employee
 from app.database.session import get_db
 from schemas.customer_schemas import (
     CustomerCreateSchema,
@@ -15,7 +16,10 @@ router = APIRouter(prefix="/customers", tags=["customers"])
 
 
 @router.get("/")
-def get_all_customers(db: Session = Depends(get_db)):
+def get_all_customers(
+        db: Session = Depends(get_db),
+        user = Depends(require_viewer)
+):
     try:
         service = CustomerService(db)
         return service.get_all_customers()
@@ -24,7 +28,11 @@ def get_all_customers(db: Session = Depends(get_db)):
 
 
 @router.post("/")
-def create_customer(payload: CustomerCreateSchema, db: Session = Depends(get_db)):
+def create_customer(
+        payload: CustomerCreateSchema,
+        db: Session = Depends(get_db),
+        user = Depends(require_employee)
+):
     try:
         service = CustomerService(db)
         service.create_customer(
@@ -44,7 +52,12 @@ def create_customer(payload: CustomerCreateSchema, db: Session = Depends(get_db)
 
 
 @router.put("/{customer_id}/email")
-def update_customer_email(customer_id: int, payload: CustomerUpdateEmailSchema, db: Session = Depends(get_db)):
+def update_customer_email(
+        customer_id: int,
+        payload: CustomerUpdateEmailSchema,
+        db: Session = Depends(get_db),
+        user = Depends(require_employee)
+):
     try:
         service = CustomerService(db)
         service.update_customer_email(customer_id, payload.new_email)
@@ -56,7 +69,12 @@ def update_customer_email(customer_id: int, payload: CustomerUpdateEmailSchema, 
 
 
 @router.put("/{customer_id}/phone")
-def update_customer_phone(customer_id: int, payload: CustomerUpdatePhoneSchema, db: Session = Depends(get_db)):
+def update_customer_phone(
+        customer_id: int,
+        payload: CustomerUpdatePhoneSchema,
+        db: Session = Depends(get_db),
+        user = Depends(require_employee)
+):
     try:
         service = CustomerService(db)
         service.update_customer_phone(customer_id, payload.new_phone)
@@ -68,7 +86,12 @@ def update_customer_phone(customer_id: int, payload: CustomerUpdatePhoneSchema, 
 
 
 @router.put("/{customer_id}/address")
-def update_customer_address(customer_id: int, payload: CustomerUpdateAddressSchema, db: Session = Depends(get_db)):
+def update_customer_address(
+        customer_id: int,
+        payload: CustomerUpdateAddressSchema,
+        db: Session = Depends(get_db),
+        user = Depends(require_employee)
+):
     try:
         service = CustomerService(db)
         service.update_customer_address(customer_id, payload.new_address)
@@ -80,7 +103,12 @@ def update_customer_address(customer_id: int, payload: CustomerUpdateAddressSche
 
 
 @router.put("/{customer_id}/notes")
-def update_customer_notes(customer_id: int, payload: CustomerUpdateNotesSchema, db: Session = Depends(get_db)):
+def update_customer_notes(
+        customer_id: int,
+      payload: CustomerUpdateNotesSchema,
+      db: Session = Depends(get_db),
+      user = Depends(require_employee)
+):
     try:
         service = CustomerService(db)
         service.update_customer_notes(customer_id, payload.new_notes)
@@ -92,7 +120,11 @@ def update_customer_notes(customer_id: int, payload: CustomerUpdateNotesSchema, 
 
 
 @router.delete("/{customer_id}")
-def delete_customer(customer_id: int, db: Session = Depends(get_db)):
+def delete_customer(
+        customer_id: int,
+        db: Session = Depends(get_db),
+        user = Depends(require_admin)
+):
     try:
         service = CustomerService(db)
         service.delete_customer(customer_id)

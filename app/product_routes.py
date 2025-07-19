@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from services.product_service import ProductService
 from app.database.session import get_db
+from security.dependencies import require_admin, require_self_or_admin, require_employee
 from schemas.product_schemas import (
     ProductCreate,
     ProductUpdateName,
@@ -15,7 +16,10 @@ router = APIRouter(prefix="/products", tags=["products"])
 
 
 @router.get("/")
-def get_all_products(db: Session = Depends(get_db)):
+def get_all_products(
+        db: Session = Depends(get_db),
+        user = Depends(require_employee)
+):
     try:
         service = ProductService(db)
         return service.get_all_products()
@@ -24,7 +28,11 @@ def get_all_products(db: Session = Depends(get_db)):
 
 
 @router.post("/")
-def create_product(payload: ProductCreate, db: Session = Depends(get_db)):
+def create_product(
+        payload: ProductCreate,
+        db: Session = Depends(get_db),
+        user = Depends(require_employee)
+):
     try:
         service = ProductService(db)
         service.create_product(
@@ -39,7 +47,12 @@ def create_product(payload: ProductCreate, db: Session = Depends(get_db)):
 
 
 @router.put("/{product_id}/name")
-def update_product_name(product_id: int, payload: ProductUpdateName, db: Session = Depends(get_db)):
+def update_product_name(
+        product_id: int,
+        payload: ProductUpdateName,
+        db: Session = Depends(get_db),
+        user = Depends(require_employee)
+):
     try:
         service = ProductService(db)
         service.update_product_name(product_id, payload.new_name)
@@ -49,7 +62,12 @@ def update_product_name(product_id: int, payload: ProductUpdateName, db: Session
 
 
 @router.put("/{product_id}/price")
-def update_product_price(product_id: int, payload: ProductUpdatePrice, db: Session = Depends(get_db)):
+def update_product_price(
+        product_id: int,
+        payload: ProductUpdatePrice,
+        db: Session = Depends(get_db),
+        user = Depends(require_employee)
+):
     try:
         service = ProductService(db)
         service.update_product_price(product_id, payload.new_price)
@@ -59,7 +77,12 @@ def update_product_price(product_id: int, payload: ProductUpdatePrice, db: Sessi
 
 
 @router.put("/{product_id}/unit")
-def update_product_unit(product_id: int, payload: ProductUpdateUnit, db: Session = Depends(get_db)):
+def update_product_unit(
+        product_id: int,
+        payload: ProductUpdateUnit,
+        db: Session = Depends(get_db),
+        user = Depends(require_employee)
+):
     try:
         service = ProductService(db)
         service.update_product_unit(product_id, payload.new_unit)
@@ -69,7 +92,12 @@ def update_product_unit(product_id: int, payload: ProductUpdateUnit, db: Session
 
 
 @router.put("/{product_id}/description")
-def update_product_description(product_id: int, payload: ProductUpdateDescription, db: Session = Depends(get_db)):
+def update_product_description(
+        product_id: int,
+        payload: ProductUpdateDescription,
+        db: Session = Depends(get_db),
+        user = Depends(require_employee)
+):
     try:
         service = ProductService(db)
         service.update_product_description(product_id, payload.new_description)
@@ -79,7 +107,11 @@ def update_product_description(product_id: int, payload: ProductUpdateDescriptio
 
 
 @router.delete("/{product_id}")
-def delete_product(product_id: int, db: Session = Depends(get_db)):
+def delete_product(
+        product_id: int,
+        db: Session = Depends(get_db),
+        user = Depends(require_admin)
+):
     try:
         service = ProductService(db)
         service.delete_product(product_id)

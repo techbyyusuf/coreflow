@@ -5,7 +5,7 @@ from services.user_service import UserService
 from app.database.session import get_db
 from schemas.user_schemas import UserCreateSchema, UserUpdateEmailSchema, UserUpdatePasswordSchema
 from models.user import User
-from security.dependencies import require_admin, require_employee, require_viewer, require_self_or_admin
+from security.dependencies import require_admin, require_self_or_admin
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -47,7 +47,7 @@ def create_user(
 def update_user_email(user_id: int,
                       payload: UserUpdateEmailSchema,
                       db: Session = Depends(get_db),
-                      current_user: User = Depends(lambda: require_self_or_admin)
+                      current_user: User = Depends(require_self_or_admin)
                       ):
     try:
         service = UserService(db)
@@ -63,7 +63,7 @@ def update_user_email(user_id: int,
 def update_user_password(user_id: int,
                          payload: UserUpdatePasswordSchema,
                          db: Session = Depends(get_db),
-                         current_user: User = Depends(lambda: require_self_or_admin)
+                         current_user: User = Depends(require_self_or_admin)
                          ):
     try:
         service = UserService(db)

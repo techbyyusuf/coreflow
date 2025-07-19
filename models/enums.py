@@ -1,9 +1,9 @@
 import enum
 
 class UserRole(enum.Enum):
-    ADMIN = "admin"
-    EMPLOYEE = "employee"
-    VIEWER = "viewer"
+    ADMIN = "ADMIN"
+    EMPLOYEE = "EMPLOYEE"
+    VIEWER = "VIEWER"
 
 
 class UnitType(enum.Enum):
@@ -13,7 +13,7 @@ class UnitType(enum.Enum):
 
 
 class OrderStatus(enum.Enum):
-    DRAFT = "open"
+    DRAFT = "draft"
     IN_PROGRESS = "in_progress"
     OPEN = "open"
     COMPLETED = "completed"

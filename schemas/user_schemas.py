@@ -1,10 +1,10 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 
 class UserCreateSchema(BaseModel):
     name: str
     email: str
     password: str
-    role: str = "employee"
+    role: str = "VIEWER"
 
 class UserUpdateEmailSchema(BaseModel):
     new_email: str

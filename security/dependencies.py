@@ -4,6 +4,7 @@ from jose import JWTError, jwt
 from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+
 from app.database.session import get_db
 from models.user import User
 from security.token_utils import SECRET_KEY, ALGORITHM
@@ -29,13 +30,13 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 
 
 def require_admin(user: User = Depends(get_current_user)):
-    if user.role != "ADMIN":
+    if user.role.value != "ADMIN":
         raise HTTPException(status_code=403, detail="Admin privileges required")
     return user
 
 
 def require_employee(user: User = Depends(get_current_user)):
-    if user.role not in ["ADMIN", "EMPLOYEE"]:
+    if user.role.value not in ["ADMIN", "EMPLOYEE"]:
         raise HTTPException(status_code=403, detail="Employee privileges required")
     return user
 
@@ -48,6 +49,8 @@ def require_self_or_admin(
     user_id: int,
     current_user: User = Depends(get_current_user)
 ):
-    if current_user.role != "ADMIN" and current_user.id != user_id:
+    print(
+        f"Current user: {current_user.id} - Target user: {user_id} - Role: {current_user.role}")
+    if current_user.role.value != "ADMIN" and current_user.id != user_id:
         raise HTTPException(status_code=403, detail="Not authorized.")
     return current_user
