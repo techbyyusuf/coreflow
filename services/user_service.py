@@ -198,7 +198,8 @@ class UserService:
             raise ValueError(f"User with id '{user_id}' not found.")
 
         try:
-            user.password = new_password
+            hashed_password = hash_password(new_password)
+            user.password = hashed_password
             self.session.commit()
             logger.info(f"User password updated successfully for id '{user.id}'.")
         except SQLAlchemyError as e:
