@@ -13,9 +13,29 @@ class ProductService:
         self.session = session
 
 
+    def raise_if_product_name_exists(self, product_name: str) -> None:
+        stmt = select(Product).where(Product.name == product_name)
+        product = self.session.scalars(stmt).first()
+
+        if product:
+            raise ValueError("Product name already in use by another product.")
+        return None
+
+
+    def get_product_by_id_or_raise(self, product_id: int) -> Product | None :
+        stmt = select(Product).where(Product.id == product_id)
+        product = self.session.scalars(stmt).first()
+
+        if not product:
+            raise ValueError(f"Product with id '{product_id}' not found.")
+        return product
+
+
     def create_product(self, name: str, unit_price: float, unit: str, description: str = None) -> None:
         if unit_price < 0:
             raise ValueError("Unit price must be zero or positive.")
+
+        self.raise_if_product_name_exists(name)
 
         new_product = Product(
             name=name,
@@ -41,15 +61,6 @@ class ProductService:
             return []
 
 
-    def get_product_by_id_or_raise(self, product_id: int) -> Product | None:
-        product = self.session.scalars(
-            select(Product).where(Product.id == product_id)
-        ).first()
-        if not product:
-            raise ValueError(f"Product with id '{product_id}' not found.")
-        return product
-
-
     def update_product_price(self, product_id: int, new_unit_price: float) -> None:
         product = self.get_product_by_id_or_raise(product_id)
 
@@ -69,11 +80,7 @@ class ProductService:
     def update_product_name(self, product_id: int, new_name: str) -> None:
         product = self.get_product_by_id_or_raise(product_id)
 
-        stmt = select(Product).where(Product.name == new_name)
-        existing_product = self.session.scalars(stmt).first()
-
-        if existing_product and existing_product.id != product_id:
-            raise ValueError("Product name already in use by another product.")
+        self.raise_if_product_name_exists(new_name)
 
         try:
             product.name = new_name
