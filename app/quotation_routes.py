@@ -15,7 +15,9 @@ def get_all_quotations(
         db: Session = Depends(get_db),
         user = Depends(require_viewer)
 ):
-    """Retrieve all quotations, optionally filtered by status"""
+    """
+    Retrieve all quotations or filter by status.
+    """
     service = QuotationService(db)
     try:
         if status:
@@ -34,7 +36,9 @@ def create_quotation(
         db: Session = Depends(get_db),
         user = Depends(require_employee)
 ):
-    """Create a new quotation"""
+    """
+    Create a new quotation.
+    """
     service = QuotationService(db)
     try:
         service.create_quotation(
@@ -59,7 +63,9 @@ def update_quotation_status(
         db: Session = Depends(get_db),
         user = Depends(require_employee)
 ):
-    """Update quotation status"""
+    """
+    Update the status of a quotation.
+    """
     service = QuotationService(db)
     try:
         service.update_quotation_status(quotation_id, payload.new_status)
@@ -76,7 +82,9 @@ def delete_quotation(
         db: Session = Depends(get_db),
         user = Depends(require_admin)
 ):
-    """Delete a quotation"""
+    """
+    Delete a quotation by ID.
+    """
     service = QuotationService(db)
     try:
         service.delete_quotation(quotation_id)

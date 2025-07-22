@@ -20,6 +20,9 @@ def get_all_customers(
         db: Session = Depends(get_db),
         user = Depends(require_viewer)
 ):
+    """
+    Retrieve all customers from the database.
+    """
     try:
         service = CustomerService(db)
         return service.get_all_customers()
@@ -33,6 +36,9 @@ def create_customer(
         db: Session = Depends(get_db),
         user = Depends(require_employee)
 ):
+    """
+    Create a new customer with optional fields.
+    """
     try:
         service = CustomerService(db)
         service.create_customer(
@@ -58,6 +64,9 @@ def update_customer_email(
         db: Session = Depends(get_db),
         user = Depends(require_employee)
 ):
+    """
+    Update a customer's email address.
+    """
     try:
         service = CustomerService(db)
         service.update_customer_email(customer_id, payload.new_email)
@@ -75,6 +84,9 @@ def update_customer_phone(
         db: Session = Depends(get_db),
         user = Depends(require_employee)
 ):
+    """
+    Update a customer's phone number.
+    """
     try:
         service = CustomerService(db)
         service.update_customer_phone(customer_id, payload.new_phone)
@@ -92,6 +104,9 @@ def update_customer_address(
         db: Session = Depends(get_db),
         user = Depends(require_employee)
 ):
+    """
+    Update a customer's address.
+    """
     try:
         service = CustomerService(db)
         service.update_customer_address(customer_id, payload.new_address)
@@ -105,10 +120,13 @@ def update_customer_address(
 @router.put("/{customer_id}/notes")
 def update_customer_notes(
         customer_id: int,
-      payload: CustomerUpdateNotesSchema,
-      db: Session = Depends(get_db),
-      user = Depends(require_employee)
+        payload: CustomerUpdateNotesSchema,
+        db: Session = Depends(get_db),
+        user = Depends(require_employee)
 ):
+    """
+    Update a customer's notes field.
+    """
     try:
         service = CustomerService(db)
         service.update_customer_notes(customer_id, payload.new_notes)
@@ -125,6 +143,9 @@ def delete_customer(
         db: Session = Depends(get_db),
         user = Depends(require_admin)
 ):
+    """
+    Delete a customer by ID.
+    """
     try:
         service = CustomerService(db)
         service.delete_customer(customer_id)

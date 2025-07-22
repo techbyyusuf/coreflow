@@ -20,6 +20,9 @@ def get_all_products(
         db: Session = Depends(get_db),
         user = Depends(require_employee)
 ):
+    """
+    Retrieve all products.
+    """
     try:
         service = ProductService(db)
         return service.get_all_products()
@@ -33,6 +36,9 @@ def create_product(
         db: Session = Depends(get_db),
         user = Depends(require_employee)
 ):
+    """
+    Create a new product.
+    """
     try:
         service = ProductService(db)
         service.create_product(
@@ -53,6 +59,9 @@ def update_product_name(
         db: Session = Depends(get_db),
         user = Depends(require_employee)
 ):
+    """
+    Update the name of a product.
+    """
     try:
         service = ProductService(db)
         service.update_product_name(product_id, payload.new_name)
@@ -68,6 +77,9 @@ def update_product_price(
         db: Session = Depends(get_db),
         user = Depends(require_employee)
 ):
+    """
+    Update the price of a product.
+    """
     try:
         service = ProductService(db)
         service.update_product_price(product_id, payload.new_price)
@@ -83,6 +95,9 @@ def update_product_unit(
         db: Session = Depends(get_db),
         user = Depends(require_employee)
 ):
+    """
+    Update the unit of a product.
+    """
     try:
         service = ProductService(db)
         service.update_product_unit(product_id, payload.new_unit)
@@ -98,6 +113,9 @@ def update_product_description(
         db: Session = Depends(get_db),
         user = Depends(require_employee)
 ):
+    """
+    Update the description of a product.
+    """
     try:
         service = ProductService(db)
         service.update_product_description(product_id, payload.new_description)
@@ -112,6 +130,9 @@ def delete_product(
         db: Session = Depends(get_db),
         user = Depends(require_admin)
 ):
+    """
+    Delete a product by ID.
+    """
     try:
         service = ProductService(db)
         service.delete_product(product_id)

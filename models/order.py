@@ -5,6 +5,23 @@ from models.base import Base
 from models.enums import OrderStatus
 
 class Order(Base):
+    """
+    Defines the Order model representing customer orders.
+
+    Attributes:
+        id (int): Primary key.
+        customer_id (int): Foreign key referencing the customer.
+        user_id (int): Foreign key referencing the user who created the order.
+        issue_date (date): The date the order was issued.
+        due_date (date): Optional due date for order fulfillment.
+        delivery_date (date): Optional delivery date.
+        order_number (str): Unique identifier for the order.
+        status (OrderStatus): Status of the order (e.g., open, shipped).
+        reference (str): Reference text.
+        notes (str): Optional notes about the order.
+        items (list[OrderItem]): Related order items.
+    """
+
     __tablename__ = "orders"
 
     id: Mapped[int] = mapped_column(primary_key=True)

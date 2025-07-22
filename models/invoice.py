@@ -5,6 +5,21 @@ from models.base import Base
 from models.enums import InvoiceStatus
 
 class Invoice(Base):
+    """
+    Defines the Invoice model representing billing documents.
+
+    Attributes:
+        id (int): Primary key.
+        customer_id (int): Foreign key referencing the customer.
+        user_id (int): Foreign key referencing the user who issued the invoice.
+        issue_date (date): The date the invoice was created.
+        due_date (date): Optional due date for payment.
+        invoice_number (str): Unique invoice identifier.
+        status (InvoiceStatus): Status of the invoice (e.g., sent, paid).
+        notes (str): Optional notes regarding the invoice.
+        items (list[InvoiceItem]): Related invoice items.
+    """
+
     __tablename__ = "invoices"
 
     id: Mapped[int] = mapped_column(primary_key=True)

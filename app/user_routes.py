@@ -15,6 +15,9 @@ def get_all_users(
         db: Session = Depends(get_db),
         user = Depends(require_admin)
 ):
+    """
+    Retrieve all users (admin only).
+    """
     try:
         service = UserService(db)
         return service.get_all_users()
@@ -28,6 +31,9 @@ def create_user(
         db: Session = Depends(get_db),
         user = Depends(require_admin)
 ):
+    """
+    Create a new user (admin only).
+    """
     try:
         service = UserService(db)
         service.create_user(
@@ -44,11 +50,15 @@ def create_user(
 
 
 @router.put("/{user_id}/email")
-def update_user_email(user_id: int,
-                      payload: UserUpdateEmailSchema,
-                      db: Session = Depends(get_db),
-                      current_user: User = Depends(require_self_or_admin)
-                      ):
+def update_user_email(
+        user_id: int,
+        payload: UserUpdateEmailSchema,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(require_self_or_admin)
+):
+    """
+    Update the email address of a user.
+    """
     try:
         service = UserService(db)
         service.update_user_email(user_id, payload.new_email)
@@ -60,11 +70,15 @@ def update_user_email(user_id: int,
 
 
 @router.put("/{user_id}/password")
-def update_user_password(user_id: int,
-                         payload: UserUpdatePasswordSchema,
-                         db: Session = Depends(get_db),
-                         current_user: User = Depends(require_self_or_admin)
-                         ):
+def update_user_password(
+        user_id: int,
+        payload: UserUpdatePasswordSchema,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(require_self_or_admin)
+):
+    """
+    Update the password of a user.
+    """
     try:
         service = UserService(db)
         service.update_user_password(user_id, payload.new_password)
@@ -76,10 +90,14 @@ def update_user_password(user_id: int,
 
 
 @router.delete("/{user_id}")
-def delete_user(user_id: int,
-                db: Session = Depends(get_db),
-                user = Depends(require_admin)
-                ):
+def delete_user(
+        user_id: int,
+        db: Session = Depends(get_db),
+        user = Depends(require_admin)
+):
+    """
+    Delete a user by ID (admin only).
+    """
     try:
         service = UserService(db)
         service.delete_user(user_id)

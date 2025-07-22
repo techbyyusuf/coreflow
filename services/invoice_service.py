@@ -4,7 +4,6 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from models.invoice import Invoice
 from models.enums import InvoiceStatus
-
 from models.customer import Customer
 from models.user import User
 
@@ -13,11 +12,27 @@ logger = logging.getLogger(__name__)
 
 
 class InvoiceService:
+    """
+    Service class for managing invoice operations such as creation, update, and deletion.
+    """
+
     def __init__(self, session):
+        """
+        Initializes the service with a database session.
+        """
         self.session = session
 
 
     def get_item_by_id_or_raise(self, invoice_id: int) -> Invoice:
+        """
+        Retrieves an invoice by ID or raises a ValueError if not found.
+
+        Args:
+            invoice_id (int): ID of the invoice.
+
+        Returns:
+            Invoice: The found invoice instance.
+        """
         stmt = select(Invoice).where(Invoice.id == invoice_id)
         invoice = self.session.scalars(stmt).first()
 
@@ -27,6 +42,15 @@ class InvoiceService:
 
 
     def get_customer_or_raise(self, customer_id: int) -> Customer:
+        """
+        Retrieves a customer by ID or raises a ValueError if not found.
+
+        Args:
+            customer_id (int): ID of the customer.
+
+        Returns:
+            Customer: The found customer instance.
+        """
         stmt = select(Customer).where(Customer.id == customer_id)
         customer = self.session.scalars(stmt).first()
 
@@ -36,6 +60,15 @@ class InvoiceService:
 
 
     def get_user_or_raise(self, user_id: int) -> User:
+        """
+        Retrieves a user by ID or raises a ValueError if not found.
+
+        Args:
+            user_id (int): ID of the user.
+
+        Returns:
+            User: The found user instance.
+        """
         stmt = select(User).where(User.id == user_id)
         user = self.session.scalars(stmt).first()
 
@@ -54,6 +87,21 @@ class InvoiceService:
         status: str = "DRAFT",
         notes: str = None
     ) -> None:
+        """
+        Creates a new invoice with optional fields and validations.
+
+        Args:
+            customer_id (int): ID of the customer.
+            user_id (int): ID of the user.
+            issue_date (date): Invoice issue date.
+            due_date (date, optional): Due date.
+            invoice_number (str, optional): Unique invoice number.
+            status (str): Status string, must match InvoiceStatus.
+            notes (str, optional): Notes.
+
+        Raises:
+            ValueError: If status or invoice_number is invalid or already in use.
+        """
         self.get_customer_or_raise(customer_id)
         self.get_user_or_raise(user_id)
 
@@ -88,6 +136,12 @@ class InvoiceService:
 
 
     def get_all_invoices(self):
+        """
+        Retrieves all invoices from the database.
+
+        Returns:
+            list: List of all Invoice objects.
+        """
         try:
             return self.session.scalars(select(Invoice)).all()
         except SQLAlchemyError as e:
@@ -96,6 +150,16 @@ class InvoiceService:
 
 
     def update_invoice_status(self, invoice_id: int, new_status: str) -> None:
+        """
+        Updates the status of an invoice.
+
+        Args:
+            invoice_id (int): Invoice ID.
+            new_status (str): New status value.
+
+        Raises:
+            ValueError: If new_status is invalid.
+        """
         invoice = self.get_item_by_id_or_raise(invoice_id)
 
         if new_status.upper() not in InvoiceStatus.__members__:
@@ -112,6 +176,13 @@ class InvoiceService:
 
 
     def update_invoice_notes(self, invoice_id: int, new_notes: str) -> None:
+        """
+        Updates the notes of an invoice.
+
+        Args:
+            invoice_id (int): Invoice ID.
+            new_notes (str): New notes.
+        """
         invoice = self.get_item_by_id_or_raise(invoice_id)
 
         try:
@@ -125,6 +196,12 @@ class InvoiceService:
 
 
     def delete_invoice(self, invoice_id: int) -> None:
+        """
+        Deletes an invoice by ID.
+
+        Args:
+            invoice_id (int): ID of the invoice to delete.
+        """
         invoice = self.get_item_by_id_or_raise(invoice_id)
 
         try:
@@ -138,6 +215,18 @@ class InvoiceService:
 
 
     def get_invoices_by_status(self, status: str):
+        """
+        Retrieves all invoices filtered by status.
+
+        Args:
+            status (str): The invoice status to filter by.
+
+        Returns:
+            list: List of matching Invoice instances.
+
+        Raises:
+            ValueError: If status is invalid.
+        """
         if status.upper() not in InvoiceStatus.__members__:
             raise ValueError(f"Invalid invoice status: {status}")
 

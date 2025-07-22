@@ -8,12 +8,29 @@ from models.enums import UnitType
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class ProductService:
+    """
+    Service class for managing products including creation, updates, and deletion.
+    """
+
     def __init__(self, session):
+        """
+        Initializes the service with a database session.
+        """
         self.session = session
 
 
     def raise_if_product_name_exists(self, product_name: str) -> None:
+        """
+        Checks if a product name already exists and raises an error if it does.
+
+        Args:
+            product_name (str): Name to check.
+
+        Raises:
+            ValueError: If the product name is already in use.
+        """
         stmt = select(Product).where(Product.name == product_name)
         product = self.session.scalars(stmt).first()
 
@@ -22,7 +39,16 @@ class ProductService:
         return None
 
 
-    def get_product_by_id_or_raise(self, product_id: int) -> Product | None :
+    def get_product_by_id_or_raise(self, product_id: int) -> Product | None:
+        """
+        Retrieves a product by ID or raises an error if not found.
+
+        Args:
+            product_id (int): ID of the product.
+
+        Returns:
+            Product: The product instance.
+        """
         stmt = select(Product).where(Product.id == product_id)
         product = self.session.scalars(stmt).first()
 
@@ -32,6 +58,18 @@ class ProductService:
 
 
     def create_product(self, name: str, unit_price: float, unit: str, description: str = None) -> None:
+        """
+        Creates a new product after checking for duplicates and valid unit.
+
+        Args:
+            name (str): Product name.
+            unit_price (float): Price per unit.
+            unit (str): Unit of measurement.
+            description (str, optional): Product description.
+
+        Raises:
+            ValueError: If input is invalid or duplicate.
+        """
         if unit_price < 0:
             raise ValueError("Unit price must be zero or positive.")
 
@@ -54,6 +92,12 @@ class ProductService:
 
 
     def get_all_products(self):
+        """
+        Retrieves all products from the database.
+
+        Returns:
+            list: List of Product instances.
+        """
         try:
             return self.session.scalars(select(Product)).all()
         except SQLAlchemyError as e:
@@ -62,6 +106,16 @@ class ProductService:
 
 
     def update_product_price(self, product_id: int, new_unit_price: float) -> None:
+        """
+        Updates the unit price of a product.
+
+        Args:
+            product_id (int): Product ID.
+            new_unit_price (float): New unit price.
+
+        Raises:
+            ValueError: If price is negative.
+        """
         product = self.get_product_by_id_or_raise(product_id)
 
         if new_unit_price < 0:
@@ -78,6 +132,16 @@ class ProductService:
 
 
     def update_product_name(self, product_id: int, new_name: str) -> None:
+        """
+        Updates the name of a product.
+
+        Args:
+            product_id (int): Product ID.
+            new_name (str): New name.
+
+        Raises:
+            ValueError: If the name already exists.
+        """
         product = self.get_product_by_id_or_raise(product_id)
 
         self.raise_if_product_name_exists(new_name)
@@ -93,6 +157,13 @@ class ProductService:
 
 
     def update_product_description(self, product_id: int, new_description: str) -> None:
+        """
+        Updates the description of a product.
+
+        Args:
+            product_id (int): Product ID.
+            new_description (str): New description text.
+        """
         product = self.get_product_by_id_or_raise(product_id)
 
         try:
@@ -106,6 +177,16 @@ class ProductService:
 
 
     def update_product_unit(self, product_id: int, new_unit: str) -> None:
+        """
+        Updates the unit of a product.
+
+        Args:
+            product_id (int): Product ID.
+            new_unit (str): New unit value.
+
+        Raises:
+            ValueError: If the new unit is not valid.
+        """
         product = self.get_product_by_id_or_raise(product_id)
 
         if new_unit.upper() not in UnitType.__members__:
@@ -122,6 +203,12 @@ class ProductService:
 
 
     def delete_product(self, product_id: int) -> None:
+        """
+        Deletes a product by ID.
+
+        Args:
+            product_id (int): ID of the product to delete.
+        """
         product = self.get_product_by_id_or_raise(product_id)
 
         try:

@@ -14,7 +14,9 @@ def get_all_order_items(
         db: Session = Depends(get_db),
         user = Depends(require_employee)
 ):
-    """Retrieve all order items"""
+    """
+    Retrieve all order items.
+    """
     service = OrderItemService(db)
     try:
         return service.get_all_items()
@@ -28,7 +30,9 @@ def create_order_item(
         db: Session = Depends(get_db),
         user = Depends(require_employee)
 ):
-    """Create a new order item"""
+    """
+    Create a new order item.
+    """
     service = OrderItemService(db)
     try:
         service.create_item(
@@ -45,12 +49,15 @@ def create_order_item(
 
 
 @router.put("/{item_id}")
-def update_order_item(item_id: int,
-                      payload: OrderItemUpdateSchema,
-                      db: Session = Depends(get_db),
+def update_order_item(
+        item_id: int,
+        payload: OrderItemUpdateSchema,
+        db: Session = Depends(get_db),
         user = Depends(require_employee)
 ):
-    """Update an order item"""
+    """
+    Update an order item by ID.
+    """
     service = OrderItemService(db)
     try:
         service.update_item(item_id, payload.new_quantity, payload.new_unit_price)
@@ -62,11 +69,14 @@ def update_order_item(item_id: int,
 
 
 @router.delete("/{item_id}")
-def delete_order_item(item_id: int,
-                      db: Session = Depends(get_db),
+def delete_order_item(
+        item_id: int,
+        db: Session = Depends(get_db),
         user = Depends(require_admin)
 ):
-    """Delete an order item"""
+    """
+    Delete an order item by ID.
+    """
     service = OrderItemService(db)
     try:
         service.delete_item(item_id)

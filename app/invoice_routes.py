@@ -15,7 +15,9 @@ def get_all_invoices(
         db: Session = Depends(get_db),
         user = Depends(require_viewer)
 ):
-    """Retrieve all invoices or filter by status"""
+    """
+    Retrieve all invoices or filter by status.
+    """
     service = InvoiceService(db)
     try:
         if status:
@@ -33,7 +35,9 @@ def create_invoice(
         db: Session = Depends(get_db),
         user = Depends(require_employee)
 ):
-    """Create a new invoice"""
+    """
+    Create a new invoice with optional due date, number, and notes.
+    """
     service = InvoiceService(db)
     try:
         service.create_invoice(
@@ -59,7 +63,9 @@ def update_invoice_status(
         db: Session = Depends(get_db),
         user = Depends(require_employee)
 ):
-    """Update invoice status"""
+    """
+    Update the status of an invoice by ID.
+    """
     service = InvoiceService(db)
     try:
         service.update_invoice_status(invoice_id, payload.new_status)
@@ -76,7 +82,9 @@ def delete_invoice(
         db: Session = Depends(get_db),
         user = Depends(require_admin)
 ):
-    """Delete an invoice"""
+    """
+    Delete an invoice by ID.
+    """
     service = InvoiceService(db)
     try:
         service.delete_invoice(invoice_id)

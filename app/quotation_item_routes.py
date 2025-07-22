@@ -14,7 +14,9 @@ def get_all_quotation_items(
         db: Session = Depends(get_db),
         user = Depends(require_employee)
 ):
-    """Retrieve all quotation items"""
+    """
+    Retrieve all quotation items.
+    """
     service = QuotationItemService(db)
     try:
         return service.get_all_items()
@@ -28,7 +30,9 @@ def create_quotation_item(
         db: Session = Depends(get_db),
         user = Depends(require_employee)
 ):
-    """Create a new quotation item"""
+    """
+    Create a new quotation item.
+    """
     service = QuotationItemService(db)
     try:
         service.create_item(
@@ -51,7 +55,9 @@ def update_quotation_item(
         db: Session = Depends(get_db),
         user = Depends(require_employee)
 ):
-    """Update a quotation item"""
+    """
+    Update a quotation item by ID.
+    """
     service = QuotationItemService(db)
     try:
         service.update_item(item_id, payload.new_quantity, payload.new_unit_price)
@@ -63,11 +69,14 @@ def update_quotation_item(
 
 
 @router.delete("/{item_id}")
-def delete_quotation_item(item_id: int,
-                          db: Session = Depends(get_db),
+def delete_quotation_item(
+        item_id: int,
+        db: Session = Depends(get_db),
         user = Depends(require_admin)
 ):
-    """Delete a quotation item"""
+    """
+    Delete a quotation item by ID.
+    """
     service = QuotationItemService(db)
     try:
         service.delete_item(item_id)

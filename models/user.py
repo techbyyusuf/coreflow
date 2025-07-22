@@ -5,6 +5,18 @@ from models.base import Base
 from models.enums import UserRole
 
 class User(Base):
+    """
+    Defines the User model for system authentication and authorization.
+
+    Attributes:
+        id (int): Primary key.
+        name (str): Full name of the user.
+        email (str): Unique email used for login.
+        password (str): Hashed password.
+        role (UserRole): Role assigned to the user (ADMIN, EMPLOYEE, VIEWER).
+        created_at (datetime): Timestamp when the user was created.
+    """
+
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(primary_key=True)

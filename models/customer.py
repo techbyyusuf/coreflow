@@ -4,6 +4,21 @@ from sqlalchemy.orm import Mapped, mapped_column
 from models.base import Base
 
 class Customer(Base):
+    """
+    Defines the Customer model for storing client-related information.
+
+    Attributes:
+        id (int): Primary key.
+        name (str): Contact person's name.
+        company_name (str): Unique company name.
+        email (str): Unique email address.
+        phone (str): Contact phone number.
+        address (str): Mailing address.
+        tax_id (str): Unique tax identification number.
+        notes (str): Optional notes about the customer.
+        created_at (datetime): Timestamp when the record was created.
+    """
+
     __tablename__ = "customers"
 
     id: Mapped[int] = mapped_column(primary_key=True)

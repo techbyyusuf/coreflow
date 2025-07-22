@@ -11,8 +11,18 @@ from security.password_manager import verify_password
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+
 @router.post("/login")
 def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    """
+    Authenticates a user using email and password.
+
+    Returns:
+        A JWT token if credentials are valid.
+
+    Raises:
+        HTTPException 401: If credentials are invalid.
+    """
     stmt = select(User).where(User.email == form_data.username)
     user = db.scalars(stmt).first()
 

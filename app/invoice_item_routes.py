@@ -14,7 +14,9 @@ def get_all_invoice_items(
         db: Session = Depends(get_db),
         user = Depends(require_employee)
 ):
-    """Retrieve all invoice items"""
+    """
+    Retrieve all invoice items.
+    """
     service = InvoiceItemService(db)
     try:
         return service.get_all_items()
@@ -28,7 +30,9 @@ def create_invoice_item(
         db: Session = Depends(get_db),
         user = Depends(require_employee)
 ):
-    """Create a new invoice item"""
+    """
+    Create a new invoice item.
+    """
     service = InvoiceItemService(db)
     try:
         service.create_item(
@@ -51,7 +55,9 @@ def update_invoice_item(
         db: Session = Depends(get_db),
         user = Depends(require_employee)
 ):
-    """Update an invoice item"""
+    """
+    Update an existing invoice item by ID.
+    """
     service = InvoiceItemService(db)
     try:
         service.update_item(item_id, payload.new_quantity, payload.new_unit_price)
@@ -68,7 +74,9 @@ def delete_invoice_item(
         db: Session = Depends(get_db),
         user = Depends(require_admin)
 ):
-    """Delete an invoice item"""
+    """
+    Delete an invoice item by ID.
+    """
     service = InvoiceItemService(db)
     try:
         service.delete_item(item_id)

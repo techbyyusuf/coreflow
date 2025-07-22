@@ -5,6 +5,18 @@ from models.base import Base
 from models.enums import UnitType
 
 class Product(Base):
+    """
+    Defines the Product model representing items that can be sold.
+
+    Attributes:
+        id (int): Primary key.
+        name (str): Unique product name.
+        description (str): Optional description of the product.
+        unit_price (float): Price per unit of the product.
+        unit (UnitType): Unit of measurement (e.g., piece, kg).
+        created_at (datetime): Timestamp when the product was added.
+    """
+
     __tablename__ = "products"
 
     id: Mapped[int] = mapped_column(primary_key=True)
