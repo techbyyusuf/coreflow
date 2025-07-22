@@ -4,12 +4,16 @@ from sqlalchemy.orm import Session
 from services.invoice_item_service import InvoiceItemService
 from schemas.invoice_item_schemas import InvoiceItemCreateSchema, InvoiceItemUpdateSchema
 from app.database.session import get_db
+from security.dependencies import require_admin, require_employee
 
 router = APIRouter(prefix="/invoice-items", tags=["invoice_items"])
 
 
 @router.get("/")
-def get_all_invoice_items(db: Session = Depends(get_db)):
+def get_all_invoice_items(
+        db: Session = Depends(get_db),
+        user = Depends(require_employee)
+):
     """Retrieve all invoice items"""
     service = InvoiceItemService(db)
     try:
@@ -19,7 +23,11 @@ def get_all_invoice_items(db: Session = Depends(get_db)):
 
 
 @router.post("/")
-def create_invoice_item(payload: InvoiceItemCreateSchema, db: Session = Depends(get_db)):
+def create_invoice_item(
+        payload: InvoiceItemCreateSchema,
+        db: Session = Depends(get_db),
+        user = Depends(require_employee)
+):
     """Create a new invoice item"""
     service = InvoiceItemService(db)
     try:
@@ -37,7 +45,12 @@ def create_invoice_item(payload: InvoiceItemCreateSchema, db: Session = Depends(
 
 
 @router.put("/{item_id}")
-def update_invoice_item(item_id: int, payload: InvoiceItemUpdateSchema, db: Session = Depends(get_db)):
+def update_invoice_item(
+        item_id: int,
+        payload: InvoiceItemUpdateSchema,
+        db: Session = Depends(get_db),
+        user = Depends(require_employee)
+):
     """Update an invoice item"""
     service = InvoiceItemService(db)
     try:
@@ -50,7 +63,11 @@ def update_invoice_item(item_id: int, payload: InvoiceItemUpdateSchema, db: Sess
 
 
 @router.delete("/{item_id}")
-def delete_invoice_item(item_id: int, db: Session = Depends(get_db)):
+def delete_invoice_item(
+        item_id: int,
+        db: Session = Depends(get_db),
+        user = Depends(require_admin)
+):
     """Delete an invoice item"""
     service = InvoiceItemService(db)
     try:

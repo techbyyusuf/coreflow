@@ -4,12 +4,16 @@ from sqlalchemy.orm import Session
 from services.order_item_service import OrderItemService
 from schemas.order_item_schemas import OrderItemCreateSchema, OrderItemUpdateSchema
 from app.database.session import get_db
+from security.dependencies import require_admin, require_employee
 
 router = APIRouter(prefix="/order-items", tags=["order-items"])
 
 
 @router.get("/")
-def get_all_order_items(db: Session = Depends(get_db)):
+def get_all_order_items(
+        db: Session = Depends(get_db),
+        user = Depends(require_employee)
+):
     """Retrieve all order items"""
     service = OrderItemService(db)
     try:
@@ -19,7 +23,11 @@ def get_all_order_items(db: Session = Depends(get_db)):
 
 
 @router.post("/")
-def create_order_item(payload: OrderItemCreateSchema, db: Session = Depends(get_db)):
+def create_order_item(
+        payload: OrderItemCreateSchema,
+        db: Session = Depends(get_db),
+        user = Depends(require_employee)
+):
     """Create a new order item"""
     service = OrderItemService(db)
     try:
@@ -37,7 +45,11 @@ def create_order_item(payload: OrderItemCreateSchema, db: Session = Depends(get_
 
 
 @router.put("/{item_id}")
-def update_order_item(item_id: int, payload: OrderItemUpdateSchema, db: Session = Depends(get_db)):
+def update_order_item(item_id: int,
+                      payload: OrderItemUpdateSchema,
+                      db: Session = Depends(get_db),
+        user = Depends(require_employee)
+):
     """Update an order item"""
     service = OrderItemService(db)
     try:
@@ -50,7 +62,10 @@ def update_order_item(item_id: int, payload: OrderItemUpdateSchema, db: Session 
 
 
 @router.delete("/{item_id}")
-def delete_order_item(item_id: int, db: Session = Depends(get_db)):
+def delete_order_item(item_id: int,
+                      db: Session = Depends(get_db),
+        user = Depends(require_admin)
+):
     """Delete an order item"""
     service = OrderItemService(db)
     try:

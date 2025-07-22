@@ -4,12 +4,17 @@ from sqlalchemy.orm import Session
 from services.invoice_service import InvoiceService
 from schemas.invoice_schemas import InvoiceCreateSchema, InvoiceUpdateStatusSchema
 from app.database.session import get_db
+from security.dependencies import require_admin, require_viewer, require_employee
 
 router = APIRouter(prefix="/invoices", tags=["invoices"])
 
 
 @router.get("/")
-def get_all_invoices(status: str = None, db: Session = Depends(get_db)):
+def get_all_invoices(
+        status: str = None,
+        db: Session = Depends(get_db),
+        user = Depends(require_viewer)
+):
     """Retrieve all invoices or filter by status"""
     service = InvoiceService(db)
     try:
@@ -23,7 +28,11 @@ def get_all_invoices(status: str = None, db: Session = Depends(get_db)):
 
 
 @router.post("/")
-def create_invoice(payload: InvoiceCreateSchema, db: Session = Depends(get_db)):
+def create_invoice(
+        payload: InvoiceCreateSchema,
+        db: Session = Depends(get_db),
+        user = Depends(require_employee)
+):
     """Create a new invoice"""
     service = InvoiceService(db)
     try:
@@ -44,7 +53,12 @@ def create_invoice(payload: InvoiceCreateSchema, db: Session = Depends(get_db)):
 
 
 @router.put("/{invoice_id}/status")
-def update_invoice_status(invoice_id: int, payload: InvoiceUpdateStatusSchema, db: Session = Depends(get_db)):
+def update_invoice_status(
+        invoice_id: int,
+        payload: InvoiceUpdateStatusSchema,
+        db: Session = Depends(get_db),
+        user = Depends(require_employee)
+):
     """Update invoice status"""
     service = InvoiceService(db)
     try:
@@ -57,7 +71,11 @@ def update_invoice_status(invoice_id: int, payload: InvoiceUpdateStatusSchema, d
 
 
 @router.delete("/{invoice_id}")
-def delete_invoice(invoice_id: int, db: Session = Depends(get_db)):
+def delete_invoice(
+        invoice_id: int,
+        db: Session = Depends(get_db),
+        user = Depends(require_admin)
+):
     """Delete an invoice"""
     service = InvoiceService(db)
     try:

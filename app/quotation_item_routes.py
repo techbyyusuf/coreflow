@@ -4,12 +4,16 @@ from sqlalchemy.orm import Session
 from services.quotation_item_service import QuotationItemService
 from schemas.quotation_item_schemas import QuotationItemCreateSchema, QuotationItemUpdateSchema
 from app.database.session import get_db
+from security.dependencies import require_admin, require_employee
 
 router = APIRouter(prefix="/quotation-items", tags=["quotation_items"])
 
 
 @router.get("/")
-def get_all_quotation_items(db: Session = Depends(get_db)):
+def get_all_quotation_items(
+        db: Session = Depends(get_db),
+        user = Depends(require_employee)
+):
     """Retrieve all quotation items"""
     service = QuotationItemService(db)
     try:
@@ -19,7 +23,11 @@ def get_all_quotation_items(db: Session = Depends(get_db)):
 
 
 @router.post("/")
-def create_quotation_item(payload: QuotationItemCreateSchema, db: Session = Depends(get_db)):
+def create_quotation_item(
+        payload: QuotationItemCreateSchema,
+        db: Session = Depends(get_db),
+        user = Depends(require_employee)
+):
     """Create a new quotation item"""
     service = QuotationItemService(db)
     try:
@@ -37,7 +45,12 @@ def create_quotation_item(payload: QuotationItemCreateSchema, db: Session = Depe
 
 
 @router.put("/{item_id}")
-def update_quotation_item(item_id: int, payload: QuotationItemUpdateSchema, db: Session = Depends(get_db)):
+def update_quotation_item(
+        item_id: int,
+        payload: QuotationItemUpdateSchema,
+        db: Session = Depends(get_db),
+        user = Depends(require_employee)
+):
     """Update a quotation item"""
     service = QuotationItemService(db)
     try:
@@ -50,7 +63,10 @@ def update_quotation_item(item_id: int, payload: QuotationItemUpdateSchema, db: 
 
 
 @router.delete("/{item_id}")
-def delete_quotation_item(item_id: int, db: Session = Depends(get_db)):
+def delete_quotation_item(item_id: int,
+                          db: Session = Depends(get_db),
+        user = Depends(require_admin)
+):
     """Delete a quotation item"""
     service = QuotationItemService(db)
     try:

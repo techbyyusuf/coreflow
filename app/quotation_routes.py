@@ -4,12 +4,17 @@ from sqlalchemy.orm import Session
 from services.quotation_service import QuotationService
 from schemas.quotation_schemas import QuotationCreateSchema, QuotationUpdateStatusSchema
 from app.database.session import get_db
+from security.dependencies import require_admin, require_viewer, require_employee
 
 router = APIRouter(prefix="/quotations", tags=["quotations"])
 
 
 @router.get("/")
-def get_all_quotations(status: str = Query(None), db: Session = Depends(get_db)):
+def get_all_quotations(
+        status: str = Query(None),
+        db: Session = Depends(get_db),
+        user = Depends(require_viewer)
+):
     """Retrieve all quotations, optionally filtered by status"""
     service = QuotationService(db)
     try:
@@ -24,7 +29,11 @@ def get_all_quotations(status: str = Query(None), db: Session = Depends(get_db))
 
 
 @router.post("/")
-def create_quotation(payload: QuotationCreateSchema, db: Session = Depends(get_db)):
+def create_quotation(
+        payload: QuotationCreateSchema,
+        db: Session = Depends(get_db),
+        user = Depends(require_employee)
+):
     """Create a new quotation"""
     service = QuotationService(db)
     try:
@@ -44,7 +53,12 @@ def create_quotation(payload: QuotationCreateSchema, db: Session = Depends(get_d
 
 
 @router.put("/{quotation_id}/status")
-def update_quotation_status(quotation_id: int, payload: QuotationUpdateStatusSchema, db: Session = Depends(get_db)):
+def update_quotation_status(
+        quotation_id: int,
+        payload: QuotationUpdateStatusSchema,
+        db: Session = Depends(get_db),
+        user = Depends(require_employee)
+):
     """Update quotation status"""
     service = QuotationService(db)
     try:
@@ -57,7 +71,11 @@ def update_quotation_status(quotation_id: int, payload: QuotationUpdateStatusSch
 
 
 @router.delete("/{quotation_id}")
-def delete_quotation(quotation_id: int, db: Session = Depends(get_db)):
+def delete_quotation(
+        quotation_id: int,
+        db: Session = Depends(get_db),
+        user = Depends(require_admin)
+):
     """Delete a quotation"""
     service = QuotationService(db)
     try:

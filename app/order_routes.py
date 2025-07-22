@@ -4,11 +4,17 @@ from sqlalchemy.orm import Session
 from services.order_service import OrderService
 from schemas.order_schemas import OrderCreateSchema, OrderUpdateStatusSchema
 from app.database.session import get_db
+from security.dependencies import require_employee, require_viewer, \
+    require_admin
 
 router = APIRouter(prefix="/orders", tags=["orders"])
 
 @router.get("/")
-def get_all_orders(status: str = None, db: Session = Depends(get_db)):
+def get_all_orders(
+        status: str = None,
+        db: Session = Depends(get_db),
+        user = Depends(require_viewer)
+):
     """Retrieve all orders, optionally filtered by status"""
     service = OrderService(db)
     try:
@@ -18,8 +24,13 @@ def get_all_orders(status: str = None, db: Session = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
 @router.post("/")
-def create_order(payload: OrderCreateSchema, db: Session = Depends(get_db)):
+def create_order(
+        payload: OrderCreateSchema,
+        db: Session = Depends(get_db),
+        user = Depends(require_employee)
+):
     """Create a new order"""
     service = OrderService(db)
     try:
@@ -38,8 +49,14 @@ def create_order(payload: OrderCreateSchema, db: Session = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.put("/{order_id}/status")
-def update_order_status(order_id: int, payload: OrderUpdateStatusSchema, db: Session = Depends(get_db)):
+def update_order_status(
+        order_id: int,
+        payload: OrderUpdateStatusSchema,
+        db: Session = Depends(get_db),
+        user = Depends(require_employee)
+):
     """Update order status"""
     service = OrderService(db)
     try:
@@ -50,8 +67,12 @@ def update_order_status(order_id: int, payload: OrderUpdateStatusSchema, db: Ses
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.delete("/{order_id}")
-def delete_order(order_id: int, db: Session = Depends(get_db)):
+def delete_order(order_id: int,
+                 db: Session = Depends(get_db),
+                 user = Depends(require_admin)
+                 ):
     """Delete an order"""
     service = OrderService(db)
     try:
