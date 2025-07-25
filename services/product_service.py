@@ -57,7 +57,7 @@ class ProductService:
         return product
 
 
-    def create_product(self, name: str, unit_price: float, unit: str, description: str = None) -> None:
+    def create_product(self, name: str, unit_price: float, unit: UnitType, description: str = None) -> None:
         """
         Creates a new product after checking for duplicates and valid unit.
 
@@ -78,7 +78,7 @@ class ProductService:
         new_product = Product(
             name=name,
             unit_price=unit_price,
-            unit=UnitType[unit.upper()],
+            unit=unit.value,
             description=description
         )
         try:
@@ -175,7 +175,6 @@ class ProductService:
             logger.error(f"Error updating product description: {e}")
             raise
 
-
     def update_product_unit(self, product_id: int, new_unit: str) -> None:
         """
         Updates the unit of a product.
@@ -189,18 +188,20 @@ class ProductService:
         """
         product = self.get_product_by_id_or_raise(product_id)
 
-        if new_unit.upper() not in UnitType.__members__:
+        try:
+            unit_enum = UnitType(new_unit)
+        except ValueError:
             raise ValueError(f"Invalid unit: {new_unit}")
 
         try:
-            product.unit = UnitType[new_unit.upper()]
+            product.unit = unit_enum
             self.session.commit()
-            logger.info(f"Product unit updated successfully for id {product_id}.")
+            logger.info(
+                f"Product unit updated successfully for id {product_id}.")
         except SQLAlchemyError as e:
             self.session.rollback()
             logger.error(f"Error updating product unit: {e}")
             raise
-
 
     def delete_product(self, product_id: int) -> None:
         """

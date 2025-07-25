@@ -1,6 +1,7 @@
 import logging
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
+from typing import Optional
 
 from models.order import Order
 from models.enums import OrderStatus
@@ -139,15 +140,39 @@ class OrderService:
             raise
 
 
-    def get_all_orders(self):
+    def get_all_orders(
+            self,
+            status: Optional[str] = None,
+            order_number: Optional[str] = None,
+            customer_id: Optional[int] = None
+    ) -> list[Order]:
         """
-        Retrieves all orders from the database.
+        Retrieves all orders, optionally filtered by status, order number, or customer ID.
+
+        Args:
+            status (str, optional): Filter by order status.
+            order_number (str, optional): Filter by exact order number.
+            customer_id (int, optional): Filter by customer ID.
 
         Returns:
-            list: List of Order instances.
+            list[Order]: List of matching Order instances.
         """
+        stmt = select(Order)
+
+        if status:
+            if status.upper() not in OrderStatus.__members__:
+                logger.warning(f"Invalid order status: '{status}'")
+                raise ValueError(f"Invalid order status: {status}")
+            stmt = stmt.where(Order.status == OrderStatus[status.upper()])
+
+        if order_number:
+            stmt = stmt.where(Order.order_number == order_number)
+
+        if customer_id:
+            stmt = stmt.where(Order.customer_id == customer_id)
+
         try:
-            return self.session.scalars(select(Order)).all()
+            return self.session.scalars(stmt).all()
         except SQLAlchemyError as e:
             logger.error(f"Error retrieving orders: {e}")
             return []

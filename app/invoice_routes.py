@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
+from typing import Optional
 
 from services.invoice_service import InvoiceService
-from schemas.invoice_schemas import InvoiceCreateSchema, InvoiceUpdateStatusSchema
+from schemas.invoice_schemas import InvoiceCreateSchema, InvoiceUpdateStatusSchema, InvoiceResponseSchema
 from app.database.session import get_db
 from security.dependencies import require_admin, require_viewer, require_employee
 
@@ -11,18 +12,22 @@ router = APIRouter(prefix="/invoices", tags=["invoices"])
 
 @router.get("/")
 def get_all_invoices(
-        status: str = None,
+        status: Optional[str] = Query(None),
+        invoice_number: Optional[str] = Query(None),
+        customer_id: Optional[int] = Query(None),
         db: Session = Depends(get_db),
         user = Depends(require_viewer)
 ):
     """
-    Retrieve all invoices or filter by status.
+    Retrieve all invoices or filter by status, invoice number or customer ID.
     """
     service = InvoiceService(db)
     try:
-        if status:
-            return service.get_invoices_by_status(status)
-        return service.get_all_invoices()
+        return service.get_all_invoices(
+            status=status,
+            invoice_number=invoice_number,
+            customer_id=customer_id
+        )
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
@@ -93,3 +98,20 @@ def delete_invoice(
         raise HTTPException(status_code=404, detail=str(ve))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/{invoice_id}", response_model=InvoiceResponseSchema)
+def get_invoice_by_id(
+        invoice_id: int,
+        db: Session = Depends(get_db),
+        user = Depends(require_viewer)
+):
+    """
+    Retrieve a specific invoice including its items.
+    """
+    service = InvoiceService(db)
+    try:
+        invoice = service.get_invoice_by_id_or_raise(invoice_id)
+        return invoice
+    except ValueError as ve:
+        raise HTTPException(status_code=404, detail=str(ve))

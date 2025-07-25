@@ -18,10 +18,19 @@ class UserRole(enum.Enum):
     VIEWER = "VIEWER"
 
 
-class UnitType(enum.Enum):
-    PIECE = "Stück"
+class UnitType(str, enum.Enum):
+    PIECE = "piece"
     KILOGRAM = "kg"
-    HOUR = "h"
+    GRAM = "g"
+    LITER = "l"
+    HOUR = "hour"
+    DAY = "day"
+    WEEK = "week"
+    MONTH = "month"
+    PACKAGE = "package"
+    SERVICE = "service"
+    METER = "m"
+    SQUARE_METER = "square_meter"
 
 
 class OrderStatus(enum.Enum):

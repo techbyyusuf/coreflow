@@ -1,6 +1,7 @@
 import logging
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
+from typing import Optional
 
 from models.invoice import Invoice
 from models.enums import InvoiceStatus
@@ -23,7 +24,7 @@ class InvoiceService:
         self.session = session
 
 
-    def get_item_by_id_or_raise(self, invoice_id: int) -> Invoice:
+    def get_invoice_by_id_or_raise(self, invoice_id: int) -> Invoice:
         """
         Retrieves an invoice by ID or raises a ValueError if not found.
 
@@ -134,20 +135,42 @@ class InvoiceService:
             logger.error(f"Error creating invoice: {e}")
             raise
 
-
-    def get_all_invoices(self):
+    def get_all_invoices(
+            self,
+            status: Optional[str] = None,
+            invoice_number: Optional[str] = None,
+            customer_id: Optional[int] = None
+    ) -> list[Invoice]:
         """
-        Retrieves all invoices from the database.
+        Retrieves all invoices, optionally filtered by status, invoice number, or customer ID.
+
+        Args:
+            status (str, optional): Filter by invoice status.
+            invoice_number (str, optional): Filter by invoice number.
+            customer_id (int, optional): Filter by customer ID.
 
         Returns:
-            list: List of all Invoice objects.
+            list[Invoice]: List of matching Invoice instances.
         """
+        stmt = select(Invoice)
+
+        if status:
+            if status.upper() not in InvoiceStatus.__members__:
+                logger.warning(f"Invalid invoice status: '{status}'")
+                raise ValueError(f"Invalid invoice status: {status}")
+            stmt = stmt.where(Invoice.status == InvoiceStatus[status.upper()])
+
+        if invoice_number:
+            stmt = stmt.where(Invoice.invoice_number == invoice_number)
+
+        if customer_id:
+            stmt = stmt.where(Invoice.customer_id == customer_id)
+
         try:
-            return self.session.scalars(select(Invoice)).all()
+            return self.session.scalars(stmt).all()
         except SQLAlchemyError as e:
             logger.error(f"Error retrieving invoices: {e}")
             return []
-
 
     def update_invoice_status(self, invoice_id: int, new_status: str) -> None:
         """
@@ -160,7 +183,7 @@ class InvoiceService:
         Raises:
             ValueError: If new_status is invalid.
         """
-        invoice = self.get_item_by_id_or_raise(invoice_id)
+        invoice = self.get_invoice_by_id_or_raise(invoice_id)
 
         if new_status.upper() not in InvoiceStatus.__members__:
             raise ValueError(f"Invalid invoice status: {new_status}")
@@ -183,7 +206,7 @@ class InvoiceService:
             invoice_id (int): Invoice ID.
             new_notes (str): New notes.
         """
-        invoice = self.get_item_by_id_or_raise(invoice_id)
+        invoice = self.get_invoice_by_id_or_raise(invoice_id)
 
         try:
             invoice.notes = new_notes
@@ -202,7 +225,7 @@ class InvoiceService:
         Args:
             invoice_id (int): ID of the invoice to delete.
         """
-        invoice = self.get_item_by_id_or_raise(invoice_id)
+        invoice = self.get_invoice_by_id_or_raise(invoice_id)
 
         try:
             self.session.delete(invoice)

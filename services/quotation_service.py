@@ -77,6 +77,24 @@ class QuotationService:
         return user
 
 
+    def quotation_with_issue_date_exists(self, issue_date: str) -> Quotation:
+        """
+            Retrieves a quotation by issue_date or raises an error if not found.
+
+        Args:
+            issue_date (str): Issue date of quotation
+
+        Returns:
+            Quotation: The found quotation.
+        """
+        stmt = select(Quotation).where(Quotation.issue_date == issue_date)
+        quotation = self.session.scalars(stmt).all()
+
+        if not quotation:
+            raise ValueError(f"Quotation with issue date '{issue_date}' not found.")
+        return quotation
+
+
     def create_quotation(
         self,
         customer_id: int,
@@ -106,9 +124,9 @@ class QuotationService:
         self.get_user_or_raise(user_id)
 
         if quotation_number is not None:
-            existing_quotation = self.session.scalars(
-                select(Quotation).where(Quotation.quotation_number == quotation_number)
-            ).first()
+            stmt = select(Quotation).where(Quotation.quotation_number == quotation_number)
+            existing_quotation = self.session.scalars(stmt).first()
+
             if existing_quotation:
                 raise ValueError("Quotation number already in use.")
 
@@ -135,15 +153,32 @@ class QuotationService:
             raise
 
 
-    def get_all_quotations(self):
+    def get_all_quotations(self, status=None, customer_id=None) -> list[Quotation]:
         """
-        Retrieves all quotations from the database.
+        Retrieves all quotations, optionally filtered by status or customer.
+
+        Args:
+            status (str, optional): Filter by status (e.g. 'DRAFT', 'SENT').
+            customer_id (int, optional): Filter by customer ID.
 
         Returns:
-            list: List of Quotation instances.
+            list: List of matching Quotation instances, or empty list if none found.
         """
+        stmt = select(Quotation)
+
+        if status:
+            if status.upper() not in QuotationStatus.__members__:
+                logger.warning(f"Invalid quotation status filter: '{status}'.")
+                raise ValueError(f"Invalid quotation status: {status}")
+            stmt = stmt.where(
+                Quotation.status == QuotationStatus[status.upper()])
+
+        if customer_id:
+            self.get_customer_or_raise(customer_id)
+            stmt = stmt.where(Quotation.customer_id == customer_id)
+
         try:
-            return self.session.scalars(select(Quotation)).all()
+            return self.session.scalars(stmt).all()
         except SQLAlchemyError as e:
             logger.error(f"Error retrieving quotations: {e}")
             return []
@@ -231,9 +266,8 @@ class QuotationService:
             raise ValueError(f"Invalid invoice status: {status}")
 
         try:
-            return self.session.scalars(
-                select(Quotation).where(Quotation.status == QuotationStatus[status.upper()])
-            ).all()
+            stmt = select(Quotation).where(Quotation.status == QuotationStatus[status.upper()])
+            return self.session.scalars(stmt).all()
         except SQLAlchemyError as e:
             logger.error(f"Error retrieving quotations with status '{status}': {e}")
             return []

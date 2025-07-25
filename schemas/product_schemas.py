@@ -1,13 +1,16 @@
 from pydantic import BaseModel, confloat
 from typing import Optional
 
+from models.enums import UnitType
+
+
 class ProductCreate(BaseModel):
     """
     Schema for creating a new product.
     """
     name: str
     unit_price: confloat(ge=0)
-    unit: str
+    unit: UnitType
     description: Optional[str] = None
 
 class ProductUpdateName(BaseModel):

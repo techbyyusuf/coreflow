@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
+from datetime import date
+from typing import Optional
 
 from services.quotation_service import QuotationService
-from schemas.quotation_schemas import QuotationCreateSchema, QuotationUpdateStatusSchema
+from schemas.quotation_schemas import QuotationCreateSchema, QuotationUpdateStatusSchema, QuotationResponseSchema
 from app.database.session import get_db
 from security.dependencies import require_admin, require_viewer, require_employee
 
@@ -11,7 +13,8 @@ router = APIRouter(prefix="/quotations", tags=["quotations"])
 
 @router.get("/")
 def get_all_quotations(
-        status: str = Query(None),
+        status: Optional[str] = Query(None),
+        customer_id: Optional[int] = Query(None),
         db: Session = Depends(get_db),
         user = Depends(require_viewer)
 ):
@@ -20,10 +23,7 @@ def get_all_quotations(
     """
     service = QuotationService(db)
     try:
-        if status:
-            return service.get_quotations_by_status(status)
-        else:
-            return service.get_all_quotations()
+        return service.get_all_quotations(status, customer_id)
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
@@ -45,6 +45,7 @@ def create_quotation(
             customer_id=payload.customer_id,
             user_id=payload.user_id,
             issue_date=payload.issue_date,
+            due_date=payload.due_date,
             quotation_number=payload.quotation_number,
             status=payload.status,
             notes=payload.notes
@@ -93,3 +94,20 @@ def delete_quotation(
         raise HTTPException(status_code=404, detail=str(ve))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/{quotation_id}", response_model=QuotationResponseSchema)
+def get_quotation_by_id(
+        quotation_id: int,
+        db: Session = Depends(get_db),
+        user = Depends(require_viewer)
+):
+    """
+    Retrieve a specific quotation including its items.
+    """
+    service = QuotationService(db)
+    try:
+        quotation = service.get_quotation_by_id_or_raise(quotation_id)
+        return quotation
+    except ValueError as ve:
+        raise HTTPException(status_code=404, detail=str(ve))
