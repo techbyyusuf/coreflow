@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   db:
     image: postgres:17
@@ -22,8 +20,13 @@ services:
       - db
     environment:
       APP_ENV: feature
+      PDF_DIR: /app/generated_pdfs
+      LOGO_PATH: /app/assets/logo.png
     ports:
       - "8001:8000"
+    volumes:
+      - ./generated_pdfs:/app/generated_pdfs:rw
+
 
 
 volumes:

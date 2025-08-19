@@ -7,6 +7,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 RUN apt-get update && apt-get install -y netcat-openbsd
 
+COPY assets/ /app/assets/
+
+RUN mkdir -p /app/generated_pdfs
+
 COPY . . 
 
 RUN chmod +x scripts/wait-for-it.sh

@@ -1,13 +1,19 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
+from pathlib import Path
 from typing import Optional
+import os
 
 from services.invoice_service import InvoiceService
 from schemas.invoice_schemas import InvoiceCreateSchema, InvoiceUpdateStatusSchema, InvoiceResponseSchema
 from app.database.session import get_db
 from security.dependencies import require_admin, require_viewer, require_employee
+from pdf_service.create_invoice import generate_pdf
 
 router = APIRouter(prefix="/invoices", tags=["invoices"])
+
+PDF_DIR = Path(os.getenv("PDF_DIR", "/app/generated_pdfs"))
 
 
 @router.get("/")
@@ -113,5 +119,43 @@ def get_invoice_by_id(
     try:
         invoice = service.get_invoice_by_id_or_raise(invoice_id)
         return invoice
+    except ValueError as ve:
+        raise HTTPException(status_code=404, detail=str(ve))
+
+
+@router.get("/generate_pdfs/{customer_id}/{invoice_id}", response_model=InvoiceResponseSchema)
+def generate_and_download_invoice_pdf(
+        invoice_id: int,
+        customer_id: int,
+        db: Session = Depends(get_db),
+        user = Depends(require_employee)
+):
+    """
+    Generate a specific invoice including its items and customer data to download.
+    """
+    service = InvoiceService(db)
+    try:
+        invoice = service.get_invoice_by_id_or_raise(invoice_id)
+        customer = service.get_customer_or_raise(customer_id)
+
+        company_name = customer.company_name
+        customer_name = customer.name
+        customer_address_street, customer_address_city = customer.address.split(",")
+        customer_address_city = customer_address_city.strip()
+
+        pdf_path_str = generate_pdf(invoice, company_name, customer_name, customer_address_street, customer_address_city)
+
+        pdf_path = Path(pdf_path_str)
+
+        if not pdf_path.exists():
+            raise HTTPException(status_code=500, detail="PDF generation failed.")
+
+
+        return FileResponse(
+            path=str(pdf_path),
+            media_type="application.pdf",
+            filename=pdf_path.name,
+            headers={"Cache-Control": "no-store"}
+        )
     except ValueError as ve:
         raise HTTPException(status_code=404, detail=str(ve))
