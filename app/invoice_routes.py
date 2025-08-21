@@ -9,7 +9,7 @@ from services.invoice_service import InvoiceService
 from schemas.invoice_schemas import InvoiceCreateSchema, InvoiceUpdateStatusSchema, InvoiceResponseSchema
 from app.database.session import get_db
 from security.dependencies import require_admin, require_viewer, require_employee
-from pdf_service.create_invoice import generate_pdf
+from pdf_service.generate_invoice_pdf import generate_pdf
 
 router = APIRouter(prefix="/invoices", tags=["invoices"])
 
@@ -135,7 +135,7 @@ def generate_and_download_invoice_pdf(
     """
     service = InvoiceService(db)
     try:
-        invoice = service.get_invoice_by_id_or_raise(invoice_id)
+        invoice = service.get_invoice_by_id_with_product(invoice_id)
         customer = service.get_customer_or_raise(customer_id)
 
         company_name = customer.company_name

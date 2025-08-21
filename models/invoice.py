@@ -31,4 +31,8 @@ class Invoice(Base):
     status: Mapped[InvoiceStatus] = mapped_column(Enum(InvoiceStatus), nullable=False)
     notes: Mapped[str] = mapped_column(String, nullable=True)
 
-    items = relationship("InvoiceItem", backref="order", cascade="all, delete-orphan")
+    items = relationship(
+        "InvoiceItem",
+        back_populates="invoice",
+        cascade="all, delete-orphan"
+    )

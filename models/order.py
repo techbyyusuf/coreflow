@@ -35,4 +35,8 @@ class Order(Base):
     reference: Mapped[str] = mapped_column(String, nullable=True)
     notes: Mapped[str] = mapped_column(String, nullable=True)
 
-    items = relationship("OrderItem", backref="order", cascade="all, delete-orphan")
+    items = relationship(
+        "OrderItem",
+        backref="order",
+        cascade="all, delete-orphan"
+    )

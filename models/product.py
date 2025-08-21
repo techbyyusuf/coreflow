@@ -1,8 +1,9 @@
 from sqlalchemy import String, Float, TIMESTAMP, func, Enum
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from models.base import Base
 from models.enums import UnitType
+from models.invoice_item import InvoiceItem
 
 class Product(Base):
     """
@@ -25,3 +26,5 @@ class Product(Base):
     unit_price: Mapped[float] = mapped_column(Float, nullable= False)
     unit: Mapped[UnitType] = mapped_column(Enum(UnitType), nullable= False)
     created_at: Mapped[TIMESTAMP] = mapped_column(TIMESTAMP, server_default=func.now())
+
+    items: Mapped[list["InvoiceItem"]] = relationship("InvoiceItem", back_populates="product")

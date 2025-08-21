@@ -3,7 +3,10 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from typing import Optional
 
+from sqlalchemy.orm import selectinload
+
 from models.invoice import Invoice
+from models.invoice_item import InvoiceItem
 from models.enums import InvoiceStatus
 from models.customer import Customer
 from models.user import User
@@ -35,6 +38,28 @@ class InvoiceService:
             Invoice: The found invoice instance.
         """
         stmt = select(Invoice).where(Invoice.id == invoice_id)
+        invoice = self.session.scalars(stmt).first()
+
+        if not invoice:
+            raise ValueError(f"Invoice with id {invoice_id} not found.")
+        return invoice
+
+
+    def get_invoice_by_id_with_product(self, invoice_id: int) -> Invoice:
+        """
+        Retrieves an invoice by ID or raises a ValueError if not found.
+
+        Args:
+            invoice_id (int): ID of the invoice.
+
+        Returns:
+            Invoice: The found invoice instance.
+        """
+        stmt = (select(Invoice)
+                .options(
+            selectinload(Invoice.items).joinedload(InvoiceItem.product)
+        )
+                .where(Invoice.id == invoice_id))
         invoice = self.session.scalars(stmt).first()
 
         if not invoice:
