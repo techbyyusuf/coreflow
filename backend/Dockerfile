@@ -19,4 +19,4 @@ RUN chmod +x scripts/wait-for-it.sh
 
 ENV PYTHONPATH=/app
 
-CMD ["scripts/wait-for-it.sh", "db", "5432", "--", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["scripts/wait-for-it.sh", "db", "5432", "--", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

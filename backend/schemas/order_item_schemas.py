@@ -26,4 +26,4 @@ class OrderItemResponseSchema(BaseModel):
     unit_price: float
 
     class Config:
-        orm_mode = True
+        from_attributes = True
