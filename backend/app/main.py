@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.auth_routes import router as auth_router
 
@@ -21,6 +22,14 @@ app = FastAPI()
 
 init_db()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(auth_router)
 
 app.include_router(user_router)
@@ -40,8 +49,3 @@ app.include_router(invoice_item_router)
 @app.get("/")
 def root():
     return {"message": "Hello from FastAPI + SQLAlchemy!"}
-
-
-
-
-# http://localhost:8001/docs

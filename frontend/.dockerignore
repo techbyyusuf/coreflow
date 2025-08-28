@@ -1,0 +1,17 @@
+# Node
+node_modules/
+dist/
+
+# Git
+.git
+.gitignore
+
+# Env
+.env
+*.env
+
+# Editor/OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

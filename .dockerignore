@@ -1,0 +1,26 @@
+# Git
+.git
+.gitignore
+
+# Python Caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Node frontend (nicht ins Backend-Image!)
+frontend/
+
+# Env
+.env
+*.env
+
+# Docker Compose Artefakte
+pgdata/
+generated_pdfs/
+
+# Editor/OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
